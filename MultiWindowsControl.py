@@ -139,6 +139,7 @@ class main(QMainWindow):
         self.list1.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.list1.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.list1.setVerticalHeaderLabels(["文件名","类型","父路径","宽度","高度","色深"])
+        self.list1.setHorizontalHeaderLabels(["属性值"])
         self.grid.addWidget(self.list1,0,8,1,2)
         self.widget.setLayout(self.grid)
         self.setCentralWidget(self.widget)
@@ -179,6 +180,8 @@ class main(QMainWindow):
         else:
             self.runreadfileThread(path)
 
+
+    # 移除图片
     def deletefile(self):
         if self.list0.currentIndex().column()<0:
             self.statusBar().showMessage("请选择要移除图片")
@@ -195,9 +198,16 @@ class main(QMainWindow):
             self.list1.clearContents() #清空数据 保留表头
             self.list0Rowindexchanged()
 
+    # 清空图片
     def clearfile(self):
         self.list0.clearContents()
-        self.list0.clearContents()
+        self.list1.clearContents()
+        self.list0.setColumnCount(0)
+        self.list0.setRowCount(0)
+        self.lb.clear()
+        self.lb2.clear()
+        self.lb3.clear()
+        self.statusBar().showMessage("已清空图片列表")
 
 
 
@@ -211,7 +221,7 @@ class main(QMainWindow):
         self.filepathline.setText(path)
 
 
-
+    # 读取数据，更新图像列表
     def readending(self):
         self.reading==False
         print(self.data)
@@ -239,7 +249,7 @@ class main(QMainWindow):
 
 
 
-
+    # 点击图像列表
     def list0Rowindexchanged(self):
         if self.list0.currentIndex().column()==-1:
             self.lb.clear()
@@ -279,6 +289,7 @@ class main(QMainWindow):
         self.thraedhistory.MessageSingle.connect(self.statusBar().showMessage)
         self.thraedhistory.start()
 
+    # 读取缓存
     def loadache(self):
         achepath = os.getcwd()+"/ache/history.ache"
         print(os.path.exists(achepath))
@@ -290,7 +301,7 @@ class main(QMainWindow):
             self.thraedreadhistory.EnddingSingle.connect(self.loadacheennding)
             self.thraedreadhistory.start()
 
-
+    # 加载缓存
     def loadacheennding(self,data):
         print("data缓存：",data["selectindex"])
         self.data=data["data"]
