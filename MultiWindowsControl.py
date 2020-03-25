@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import *
 from imagefileclass import imageObject
 from PyQt5.QtCore import *
 from Thread import *
-from MyLabel import Label
+from MyLabel import Label,editimageLabel
 
 # 主对话框
 class main(QMainWindow):
@@ -54,7 +54,9 @@ class main(QMainWindow):
 
 
         # 预览辅屏
-        self.lb = Label("请选择图片，或将图片文件拖拽至此！")
+        # self.lb = QWidget("请选择图片，或将图片文件拖拽至此！")
+        # self.lb = Label("请选择图片，或将图片文件拖拽至此！")
+        self.lb = Label()
         # self.lb.resize(192*5, 108*5)
         self.lb.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
         self.lb.setStyleSheet("border:1px solid black;background-color:white")
@@ -65,14 +67,16 @@ class main(QMainWindow):
 
 
         # 预览图片
-        self.lb2 = Label("请选择图片，或将图片文件拖拽至此！")
+        # self.lb2 = Label("请选择图片，或将图片文件拖拽至此！")
+        self.lb2 = editimageLabel()
         # self.lb.resize(192*5, 108*5)
-        self.lb2.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
+        # self.lb2.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
         self.lb2.setStyleSheet("border:1px solid black;background-color:white")
         self.lb2.MessageSignal.connect(self.statusBar().showMessage)
         self.lb2.FilepathSignal.connect(self.filepathdrop)
         self.lb2.setAcceptDrops(True)
         self.lb2.setFixedSize(192*5, 108*5)
+
         # self.grid.addWidget(self.lb,0,0,1,4)
 
         # 设置辅屏对象
@@ -90,36 +94,44 @@ class main(QMainWindow):
         # 预览图片选项卡
         self.imagetab = QTabWidget()
         self.tab1=self.imagetab.addTab(self.lb, "辅屏画面预览")
-        self.tab2=self.imagetab.addTab(self.lb2, "图片预览")
+        self.tab2=self.imagetab.addTab(self.lb2, "图片编辑")
         self.imagetab.setTabIcon(self.tab1, QtGui.QIcon('display.png'))
         self.imagetab.setTabIcon(self.tab2, QtGui.QIcon('picture.png'))
         self.grid.addWidget(self.imagetab, 0, 0, 1, 8)
 
+        # 读取文件按钮
+        self.outeditimagebutton = QPushButton("将编辑的图片输出到辅屏")
+        self.outeditimagebutton.clicked.connect(lambda: self.outeditimage())
+        self.grid.addWidget(self.outeditimagebutton, 1, 0, 1, 1)
+
+        # inflabel
+        self.inflabel=QLabel("提示：在图片编辑功能下，鼠标滚轮缩放，按住左键移动，单击右键还原")
+        self.grid.addWidget(self.inflabel, 1, 1, 1, 7)
         # 文件路径显示框
         self.filepathline=QLineEdit()
         self.filepathline.setPlaceholderText('请点击右侧按钮选择图片→')
         self.filepathline.setReadOnly(True)
-        self.grid.addWidget(self.filepathline,1,0,1,6)
+        self.grid.addWidget(self.filepathline,2,0,1,6)
 
         #读取文件按钮
         self.readfilebutton=QPushButton("添加图片文件")
         self.readfilebutton.clicked.connect(lambda:self.readfile())
-        self.grid.addWidget(self.readfilebutton,1,6,1,1)
+        self.grid.addWidget(self.readfilebutton,2,6,1,1)
 
         # 读取文件夹按钮
         self.readfolderbutton=QPushButton("添加图片文件夹")
         self.readfolderbutton.clicked.connect(lambda:self.readfolder())
-        self.grid.addWidget(self.readfolderbutton,1,7,1,1)
+        self.grid.addWidget(self.readfolderbutton,2,7,1,1)
 
         # 删除文件按钮
-        self.deletefilebutton=QPushButton("移除照片")
+        self.deletefilebutton=QPushButton("移除图片")
         self.deletefilebutton.clicked.connect(lambda:self.deletefile())
-        self.grid.addWidget(self.deletefilebutton,1,8,1,1)
+        self.grid.addWidget(self.deletefilebutton,2,8,1,1)
 
         # 清空文件按钮
-        self.deletefilebutton=QPushButton("清空照片")
+        self.deletefilebutton=QPushButton("清空图片")
         self.deletefilebutton.clicked.connect(lambda:self.clearfile())
-        self.grid.addWidget(self.deletefilebutton,1,9,1,1)
+        self.grid.addWidget(self.deletefilebutton,2,9,1,1)
 
         #图片预览列表
         self.list0 = QTableWidget()
@@ -135,7 +147,7 @@ class main(QMainWindow):
         self.list0.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         # self.list0.setFixedSize(1250,250)
         self.list0.setFixedHeight(250)
-        self.grid.addWidget(self.list0, 2, 0, 1, 10)
+        self.grid.addWidget(self.list0, 3, 0, 1, 10)
 
         
         #文件列表框
@@ -147,7 +159,7 @@ class main(QMainWindow):
         self.list1.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.list1.setVerticalHeaderLabels(["文件名","类型","父路径","宽度","高度","色深"])
         self.list1.setHorizontalHeaderLabels(["属性值"])
-        self.grid.addWidget(self.list1,0,8,1,2)
+        self.grid.addWidget(self.list1,0,8,2,2)
         self.widget.setLayout(self.grid)
         self.setCentralWidget(self.widget)
         self.statusBar().showMessage("请添加图片文件")
@@ -207,16 +219,29 @@ class main(QMainWindow):
 
     # 清空图片
     def clearfile(self):
+        self.data.filelist=[]
         self.list0.clearContents()
         self.list1.clearContents()
         self.list0.setColumnCount(0)
         self.list0.setRowCount(0)
         self.lb.clear()
-        self.lb2.clear()
+        # self.lb2.clear()
         self.lb3.clear()
         self.statusBar().showMessage("已清空图片列表")
 
-
+    # 将编辑图片输出到辅屏
+    def outeditimage(self):
+        print(self.lb2.singleOffset.x(),self.lb2.singleOffset.y())
+        pix=self.lb2.scaledImg.copy(-self.lb2.singleOffset.x(),-self.lb2.singleOffset.y(),self.lb.width(),self.lb.height())
+        lb2x=self.lb2.singleOffset.x()
+        lb2y=self.lb2.singleOffset.y()
+        lbx=lb2x
+        lby=lb2y
+        lb3x=lb2x/self.lb2.width()*self.lb3.width()
+        lb3y=lb2y/self.lb2.height()*self.lb3.height()
+        self.lb.setPixmap(pix)
+        self.lb3.setPixmap(pix.scaled(self.lb3.width(),self.lb3.height()))
+        self.statusBar().showMessage("已将编辑的图片输出到辅屏！")
 
     # 启动读取图片线程
     def runreadfileThread(self,path):
@@ -235,6 +260,7 @@ class main(QMainWindow):
         imagelist=[]
         self.list0.clear()
         self.list0.setColumnCount(len(self.data.filelist))
+        self.list0.setRowCount(1)
         for i in range(len(self.data.filelist)):
             imagepix=QLabel()
             image=self.data.filelist[i]
@@ -260,7 +286,7 @@ class main(QMainWindow):
     def list0Rowindexchanged(self):
         if self.list0.currentIndex().column()==-1:
             self.lb.clear()
-            self.lb2.clear()
+            # self.lb2.clear()
             self.lb3.clear()
             return
 
