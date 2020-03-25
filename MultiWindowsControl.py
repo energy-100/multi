@@ -27,8 +27,10 @@ class main(QMainWindow):
     def __init__(self, parent=None):
         super(main, self).__init__(parent)
         # 软件配置
+        self.setFont(QFont("Microsoft YaHei", 12))
         self.setWindowTitle('辅屏图像控制软件')
         self.setWindowIcon(QIcon('xyjk.png'))
+        self.move(20,10)
         # 全局变量
         self.filelist=[]
         self.reading=False
@@ -75,6 +77,8 @@ class main(QMainWindow):
 
         # 设置辅屏对象
         self.lb3 = Label()
+        self.lb3.setWindowIcon(QIcon('display.png'))
+        self.lb3.setWindowTitle('辅屏窗口')
         self.lb3.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
         self.lb3.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowDoesNotAcceptFocus | Qt.WindowStaysOnTopHint)
         self.lb3.setCursor(Qt.BlankCursor) # 设置鼠标隐藏
@@ -82,10 +86,13 @@ class main(QMainWindow):
             self.lb3.setGeometry(win2)
             self.lb3.show()
 
+
         # 预览图片选项卡
         self.imagetab = QTabWidget()
-        self.imagetab.addTab(self.lb, "预览辅屏")
-        self.imagetab.addTab(self.lb2, "预览图片")
+        self.tab1=self.imagetab.addTab(self.lb, "辅屏画面预览")
+        self.tab2=self.imagetab.addTab(self.lb2, "图片预览")
+        self.imagetab.setTabIcon(self.tab1, QtGui.QIcon('display.png'))
+        self.imagetab.setTabIcon(self.tab2, QtGui.QIcon('picture.png'))
         self.grid.addWidget(self.imagetab, 0, 0, 1, 8)
 
         # 文件路径显示框
@@ -305,12 +312,13 @@ class main(QMainWindow):
     def loadacheennding(self,data):
         print("data缓存：",data["selectindex"])
         self.data=data["data"]
+        lasttime=data["exittime"]
         self.reading=False
         self.readending()
         self.list0.selectColumn(data["selectindex"])
         print("self.list0.currentIndex().column()",self.list0.currentIndex().column())
         self.list0Rowindexchanged()
-        self.statusBar().showMessage("已加载缓存！")
+        self.statusBar().showMessage("已加载缓存！（上次退出时间："+lasttime+")")
 
 
 if __name__ == '__main__':

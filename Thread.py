@@ -7,6 +7,7 @@ from PyQt5 import QtCore
 from imagefileclass import imageObject
 import pickle
 import os
+import datetime
 class readfilethread(QThread):
     EnddingSingle = QtCore.pyqtSignal()
     ProcessSingle = QtCore.pyqtSignal(float)
@@ -34,6 +35,7 @@ class savehistorythread(QThread):
         datalist=dict()
         datalist["pathlist"]=[item["alldir"] for item in self.imageobject.filelist]
         datalist["selectindex"]=self.selectindex
+        datalist["exittime"]=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # 保存缓存
         if (not os.path.exists(self.achepath)):
@@ -65,6 +67,7 @@ class readhostorythread(QThread):
         data = dict()
         data["data"]=self.data
         data["selectindex"]=datalist["selectindex"]
+        data["exittime"]=datalist["exittime"]
 
         self.EnddingSingle.emit(data)
 
