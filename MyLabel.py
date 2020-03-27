@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QApplication, QLabel
+from PyQt5.QtWidgets import QWidget, QApplication, QLabel,QFrame
 from PyQt5.QtCore import QRect, Qt
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QGuiApplication
 from PyQt5 import QtCore
@@ -31,7 +31,7 @@ class Label(QLabel):
         self.FilepathSignal.emit(filename)
 
 
-class editimageLabel(QWidget):
+class editimageLabel(QFrame):
 # class editimageLabel(QLabel):
     MessageSignal = QtCore.pyqtSignal(str)
     FilepathSignal = QtCore.pyqtSignal(str)
@@ -92,22 +92,22 @@ class editimageLabel(QWidget):
     def mousePressEvent(self, event):
         pass
         if event.buttons() == QtCore.Qt.LeftButton:  # 左键按下
-            print("鼠标左键单击")  # 响应测试语句
+            # print("鼠标左键单击")  # 响应测试语句
             self.isLeftPressed = True;  # 左键按下(图片被点住),置Ture
             self.preMousePosition = event.pos()  # 获取鼠标当前位置
-        elif event.buttons() == QtCore.Qt.RightButton:  # 右键按下
-            print("鼠标右键单击")  # 响应测试语句
-        elif event.buttons() == QtCore.Qt.MidButton:  # 中键按下
-            print("鼠标中键单击")  # 响应测试语句
-        elif event.buttons() == QtCore.Qt.LeftButton | QtCore.Qt.RightButton:  # 左右键同时按下
-            print("鼠标左右键同时单击")  # 响应测试语句
-        elif event.buttons() == QtCore.Qt.LeftButton | QtCore.Qt.MidButton:  # 左中键同时按下
-            print("鼠标左中键同时单击")  # 响应测试语句
-        elif event.buttons() == QtCore.Qt.MidButton | QtCore.Qt.RightButton:  # 右中键同时按下
-            print("鼠标右中键同时单击")  # 响应测试语句
-        elif event.buttons() == QtCore.Qt.LeftButton | QtCore.Qt.MidButton \
-                | QtCore.Qt.RightButton:  # 左中右键同时按下
-            print("鼠标左中右键同时单击")  # 响应测试语句
+        # elif event.buttons() == QtCore.Qt.RightButton:  # 右键按下
+        #     print("鼠标右键单击")  # 响应测试语句
+        # elif event.buttons() == QtCore.Qt.MidButton:  # 中键按下
+        #     print("鼠标中键单击")  # 响应测试语句
+        # elif event.buttons() == QtCore.Qt.LeftButton | QtCore.Qt.RightButton:  # 左右键同时按下
+        #     print("鼠标左右键同时单击")  # 响应测试语句
+        # elif event.buttons() == QtCore.Qt.LeftButton | QtCore.Qt.MidButton:  # 左中键同时按下
+        #     print("鼠标左中键同时单击")  # 响应测试语句
+        # elif event.buttons() == QtCore.Qt.MidButton | QtCore.Qt.RightButton:  # 右中键同时按下
+        #     print("鼠标右中键同时单击")  # 响应测试语句
+        # elif event.buttons() == QtCore.Qt.LeftButton | QtCore.Qt.MidButton \
+        #         | QtCore.Qt.RightButton:  # 左中右键同时按下
+        #     print("鼠标左中右键同时单击")  # 响应测试语句
 
     '''重载一下滚轮滚动事件'''
 
@@ -121,7 +121,7 @@ class editimageLabel(QWidget):
         angleY = angle.y()  # 竖直滚过的距离
         if angleY > 0:  # 滚轮上滚
             scale=10
-            print("鼠标中键上滚",angleY)  # 响应测试语句
+            # print("鼠标中键上滚",angleY)  # 响应测试语句
             self.scaledImg = self.imgPixmap.scaled(self.scaledImg.width() +self.imgPixmap.width()*0.05, self.scaledImg.height() +self.imgPixmap.height()*0.05)
             # (x / self.scaledImg.)* * addx
             # x-(self.scaledImg./self.imgPixmap*self.scaledImg)
@@ -137,9 +137,9 @@ class editimageLabel(QWidget):
             self.singleOffset = QPoint(newWidth, newHeight)  # 更新偏移量
             self.repaint()  # 重绘
         else:  # 滚轮下滚
-            if self.scaledImg.width() >self.imgPixmap.width()*1.05  and self.scaledImg.height()>self.imgPixmap.height()*1.05 :
+            if self.scaledImg.width() >self.imgPixmap.width()*.15  and self.scaledImg.height()>self.imgPixmap.height()*0.15 :
                 # print("原始尺寸：",self.imageorsize[0],self.imageorsize[1])
-                print("鼠标中键下滚")  # 响应测试语句
+                # print("鼠标中键下滚")  # 响应测试语句
                 self.scaledImg = self.imgPixmap.scaled(self.scaledImg.width() - self.imgPixmap.width() * 0.05,
                                                        self.scaledImg.height() - self.imgPixmap.height() * 0.05)
 
@@ -161,18 +161,18 @@ class editimageLabel(QWidget):
         if event.buttons() == QtCore.Qt.LeftButton:  # 左键释放
             self.isLeftPressed = False;  # 左键释放(图片被点住),置False
             self.singleOffset = QPoint(event.x(), event.y())
-            print("鼠标左键松开")  # 响应测试语句
+            # print("鼠标左键松开")  # 响应测试语句
         elif event.button() == Qt.RightButton:  # 右键释放
             self.singleOffset = QPoint(self.imageorsize[0],self.imageorsize[1])  # 置为初值
             self.scaledImg = self.imgPixmap.copy()  # 置为初值
             self.repaint()  # 重绘
-            print("鼠标右键松开")  # 响应测试语句
+            # print("鼠标右键松开")  # 响应测试语句
 
     '''重载一下鼠标移动事件'''
 
     def mouseMoveEvent(self, event):
         if self.isLeftPressed:  # 左键按下
-            print("鼠标左键按下，移动鼠标")  # 响应测试语句
+            # print("鼠标左键按下，移动鼠标")  # 响应测试语句
             self.endMousePosition = event.pos() - self.preMousePosition  # 鼠标当前位置-先前位置=单次偏移量
             self.singleOffset = self.singleOffset + self.endMousePosition  # 更新偏移量
             self.preMousePosition = event.pos()  # 更新当前鼠标在窗口上的位置，下次移动用
