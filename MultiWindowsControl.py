@@ -12,13 +12,15 @@ from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QGuiApplication
 from PyQt5 import QtCore
 import os
 from PyQt5 import QtGui, QtWidgets
+from os import startfile
 import sys
 from PyQt5.QtWidgets import *
 from imagefileclass import imageObject
 from PyQt5.QtCore import *
 from Thread import *
-from MyLabel import Label, editimageLabel
+from MyLabel import Label, editimageLabel,Lineedit,TableWidget
 import time
+from PyQt5.QtWebEngineWidgets import *
 
 
 # 主对话框
@@ -32,6 +34,7 @@ class main(QMainWindow):
         self.setFont(QFont("Microsoft YaHei", 12))
         self.setWindowTitle('辅屏图像控制软件')
         self.setWindowIcon(QIcon('xyjk.png'))
+        # self.setStyleSheet("background-color:rgb(198,47,47,115);")
         self.move(20, 10)
 
         # todo:全局变量
@@ -44,20 +47,15 @@ class main(QMainWindow):
         self.newtemppixmap = []
         self.newtemppixmap2 = []
         self.direction = "H"
-        if (os.path.exists(os.getcwd() + "/ache/storepath")):
-            f = open(os.getcwd() + "/ache/storepath.ache", 'rb')
-            path = pickle.load(f)
-            f.close()
-            self.storedir = path
-        else:
-            self.storedir = os.getcwd() + "/store/"
+        self.direction2 = "H"
+        self.storedir = os.getcwd() + "/store/"
 
         # todo:获取屏幕信息
-        desktop = QApplication.desktop()
-        self.screen_count = desktop.screenCount()  # 屏幕数量
+        self.desktop = QApplication.desktop()
+        self.screen_count = self.desktop.screenCount()  # 屏幕数量
         print(self.screen_count)
-        self.win1 = desktop.screenGeometry(0)  # 参数为显示屏索引，如果安装了两个显示屏，主显示屏索引为0，辅显示屏索引为1
-        self.win2 = desktop.screenGeometry(1)  # 参数为显示屏索引，如果安装了两个显示屏，主显示屏索引为0，辅显示屏索引为1
+        self.win1 = self.desktop.screenGeometry(0)  # 参数为显示屏索引，如果安装了两个显示屏，主显示屏索引为0，辅显示屏索引为1
+        self.win2 = self.desktop.screenGeometry(1)  # 参数为显示屏索引，如果安装了两个显示屏，主显示屏索引为0，辅显示屏索引为1
         # available_rect = desktop.availableGeometry(0)  # 参数为显示屏索引，如果安装了两个显示屏，主显示屏索引为0，辅显示屏索引为1
 
         # todo:屏幕1Wigget
@@ -103,16 +101,22 @@ class main(QMainWindow):
             self.lb3.setGeometry(self.win2)
             self.lb3.show()
         # todo:说明文档
-        self.instructions = QLabel("操作提示:\
-                                 \n1.辅屏请设置为扩展模式\
-                                 \n2.在图片编辑功能下，鼠标滚轮缩放，按住左键移动，单击右键还原\
-                                 \n3.当图像尺寸小于窗口尺寸时，辅屏将居中显示图片\
-                                 \n4.在图片编辑功能下，默认将图片填充至整个窗口（包括右键还原的图片），\
-                                 \n   若要以原尺寸输出图片请再次在图片列表中点击图片")
-        # self.instructions.adjustSize()
-        self.instructions.setScaledContents(True)
-        print("self.instructions.minimumSize()", self.instructions.size().width(), self.instructions.size().height())
-        self.instructions.setFixedSize(900, 400)
+        self.browser = QWebEngineView()
+        # 加载外部页面，调用
+        # htmlfile=QFile()
+        self.browser.load(QUrl("file:///" +"html/directions.html"))
+
+        # self.instructions = QLabel("操作提示:\
+        #                          \n1.辅屏请设置为扩展模式\
+        #                          \n2.在图片编辑功能下，鼠标滚轮缩放，按住左键移动，单击右键还原\
+        #                          \n3.当图像尺寸小于窗口尺寸时，辅屏将居中显示图片\
+        #                          \n4.在图片编辑功能下，默认将图片填充至整个窗口（包括右键还原的图片），若要以原尺寸输出图片请再次在图片列表中点击图片\
+        #                          \n5.图片库用于保存软件生成的光栅图，可点击[修改库目录]按钮修改图片库默认位置、点击[打开图片库]打开库目录文件夹\
+        #                          \n6.生成光栅图时，设置完参数点击[生成图片] 来生成光栅图，当提示栏显示“图片生成成功!”后可以使用[添加到列表]将图片添加到列表")
+        # # self.instructions.adjustSize()
+        # self.instructions.setScaledContents(True)
+        # print("self.instructions.minimumSize()", self.instructions.size().width(), self.instructions.size().height())
+        # self.instructions.setFixedSize(900, 400)
 
         # self.instructions.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
 
@@ -168,16 +172,14 @@ class main(QMainWindow):
         self.line2colorbotton.clicked.connect(self.line2colorbottonclicked)
         self.tab3layout.addWidget(self.line2colorbotton, 2, 6, 1, 1)
 
-        self.makeimagebutton = QPushButton("生成图片")
-        self.makeimagebutton.clicked.connect(self.makeimagebottonclicked)
-        self.tab3layout.addWidget(self.makeimagebutton, 1, 7, 2, 1)
+
         self.addtolistbutton = QPushButton("添加到列表")
         self.addtolistbutton.clicked.connect(self.addtolistbuttonclicked)
         self.tab3layout.addWidget(self.addtolistbutton, 3, 0, 1, 1)
         self.addtolistandoutbutton = QPushButton("添加到列表并输出")
         self.addtolistandoutbutton.clicked.connect(self.addtolistandoutbuttonclicked)
         self.tab3layout.addWidget(self.addtolistandoutbutton, 3, 1, 1, 1)
-        self.savetostorebutton = QPushButton("保存到生成库")
+        self.savetostorebutton = QPushButton("保存到图片库")
         self.savetostorebutton.clicked.connect(self.savetostorebuttonclicked)
         self.tab3layout.addWidget(self.savetostorebutton, 3, 2, 1, 1)
         self.changestoredirbutton = QPushButton("修改库目录")
@@ -187,6 +189,9 @@ class main(QMainWindow):
         self.changestoredirLine.setText(self.storedir)
         self.changestoredirLine.setReadOnly(True)
         self.tab3layout.addWidget(self.changestoredirLine, 3, 4, 1, 3)
+        self.makeimagebutton = QPushButton("生成图片")
+        self.makeimagebutton.clicked.connect(self.makeimagebottonclicked)
+        self.tab3layout.addWidget(self.makeimagebutton, 1, 7, 1, 1)
         # ****************************************************
 
         # *****************************************************
@@ -195,7 +200,7 @@ class main(QMainWindow):
         self.lbnewiamge2 = QLabel()
         self.lbnewiamge2.setStyleSheet("background-color:white;border:1px solid red")
         self.lbnewiamge2.setFixedSize(192 * 4, 108 * 4)
-        self.tab4layout.addWidget(self.lbnewiamge2, 0, 0, 1, 10)
+        self.tab4layout.addWidget(self.lbnewiamge2, 0, 0, 1, 7)
         self.Multorderlabel = QLabel()
         self.tab4layout.addWidget(self.Multorderlabel, 1, 0, 1, 1)
         self.MultorderSlider = QSlider(Qt.Horizontal)
@@ -220,13 +225,25 @@ class main(QMainWindow):
         self.pixelnwideSlider.setValue(2)
         self.pixelnwidelabel.setText("像素宽度:" + str(self.pixelnwideSlider.value()))
 
+        self.imagechannelbox=QComboBox()
+        self.imagechannelbox.addItems(["四通道", "三通道"])
+        self.imagechannelbox.setCurrentIndex(0)
+        self.tab4layout.addWidget(self.imagechannelbox, 1, 6, 1, 1)
+
+        self.directionbox=QComboBox()
+        self.directionbox.addItems(["横向(H)", "纵向(V)"])
+        self.directionbox.setCurrentIndex(0)
+        self.tab4layout.addWidget(self.directionbox, 2, 6, 1, 1)
+
         self.makemultorderimagebutton = QPushButton("生成图片")
         self.makemultorderimagebutton.clicked.connect(self.makemultorderimagebuttonclicked)
         self.tab4layout.addWidget(self.makemultorderimagebutton, 3, 0, 1, 1)
         self.addmultordertolistbutton = QPushButton("添加到列表")
         self.addmultordertolistbutton.clicked.connect(self.addmultordertolistbuttonclicked)
         self.tab4layout.addWidget(self.addmultordertolistbutton, 3, 1, 1, 1)
-
+        self.addtostoretab4button = QPushButton("保存到图片库")
+        self.addtostoretab4button.clicked.connect(self.addtostoretab4buttonclicked)
+        self.tab4layout.addWidget(self.addtostoretab4button, 3, 2, 1, 1)
 
         self.changestoredirbuttontab4 = QPushButton("修改库目录")
         self.changestoredirbuttontab4.clicked.connect(self.changestoredirbuttonclick)
@@ -234,7 +251,7 @@ class main(QMainWindow):
         self.changestoredirLinetab4 = QLineEdit()
         self.changestoredirLinetab4.setText(self.storedir)
         self.changestoredirLinetab4.setReadOnly(True)
-        self.tab4layout.addWidget(self.changestoredirLine, 3, 4, 1, 3)
+        self.tab4layout.addWidget(self.changestoredirLinetab4, 3, 4, 1, 3)
 
         # self.line1wide.setTickPosition(QSlider.TicksBelow)  # 设置刻度位置，在下方
         # self.line1wide.setValue(5)
@@ -252,15 +269,25 @@ class main(QMainWindow):
         self.tab1layout = QHBoxLayout()
         self.tab2layout = QHBoxLayout()
         self.tabinflayout = QHBoxLayout()
+        self.tabinflayout.setContentsMargins(0, 0, 0, 0)
+
         self.tab1widget = QWidget()
         self.tab2widget = QWidget()
         self.tab3widget = QWidget()
         self.tab4widget = QWidget()
         self.tabinfwidget = QWidget()
+        self.tabinfwidget.setContentsMargins(0, 0, 0, 0)
 
         self.tab1layout.addWidget(self.lb)
         self.tab2layout.addWidget(self.lb2)
-        self.tabinflayout.addWidget(self.instructions)
+        self.tabinflayout.addWidget(self.browser)
+        # self.tabinflayout.addWidget(self.instructions)
+
+        self.tab1layout.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
+        self.tab2layout.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
+        self.tab3layout.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
+        self.tab4layout.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
+        self.tabinflayout.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
 
         self.tab1widget.setLayout(self.tab1layout)
         self.tab2widget.setLayout(self.tab2layout)
@@ -270,60 +297,89 @@ class main(QMainWindow):
 
         self.tab1 = self.imagetab.addTab(self.tab1widget, "辅屏画面预览")
         self.tab2 = self.imagetab.addTab(self.tab2widget, "图片编辑")
-        self.tab3 = self.imagetab.addTab(self.tab3widget, "图片生成")
+        self.tab3 = self.imagetab.addTab(self.tab3widget, "二阶光栅图片生成")
         self.tab4 = self.imagetab.addTab(self.tab4widget, "多阶光栅图片生成")
-        self.tabinf = self.imagetab.addTab(self.tabinfwidget, "说明文档")
+        self.tabinf = self.imagetab.addTab(self.browser, "说明文档")
+        # self.tabinf = self.imagetab.addTab(self.tabinfwidget, "说明文档")
         # self.tab1=self.imagetab.addTab(self.lb, "辅屏画面预览")
         # self.tab2=self.imagetab.addTab(self.lb2, "图片编辑")
         # # self.tab1.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
         # # self.tab2.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
         self.imagetab.setTabIcon(self.tab1, QtGui.QIcon('display.png'))
-        self.imagetab.setTabIcon(self.tab2, QtGui.QIcon('picture.png'))
+        self.imagetab.setTabIcon(self.tab2, QtGui.QIcon('编辑图片.png'))
+        self.imagetab.setTabIcon(self.tab3, QtGui.QIcon('picture.png'))
+        self.imagetab.setTabIcon(self.tab4, QtGui.QIcon('多光栅图片生成.png'))
         self.imagetab.setTabIcon(self.tabinf, QtGui.QIcon('ins.png'))
-        self.grid.addWidget(self.imagetab, 0, 0, 1, 8)
+        self.grid.addWidget(self.imagetab, 0, 0, 1, 6)
 
-        # todo:读取文件按钮
+        # todo:图片输出按钮
         self.outeditimagebutton = QPushButton("将编辑的图片输出到辅屏")
+        self.outeditimagebutton.setIcon(QIcon("输入.png"))
         self.outeditimagebutton.clicked.connect(lambda: self.outeditimage())
         self.grid.addWidget(self.outeditimagebutton, 1, 0, 1, 1)
 
         # todo:辅屏检测
-        self.inflabel = QLabel("当前屏幕数:"+str(self.screen_count))
+        self.checkwinclicked()
+        # if(self.desktop.screenCount()>1):
+        #     self.inflabel = QLabel("当前屏幕数:"+str(self.desktop.screenCount())+"(检测到辅屏，已将信号传送到辅屏！)")
+        # else:
+        #     self.inflabel = QLabel("当前屏幕数:" + str(self.desktop.screenCount()) + "(未检测到辅屏，输出窗口已关闭！)")
 
 
         self.grid.addWidget(self.inflabel, 1, 2, 1, 2)
         self.checkwinbutton = QPushButton("辅屏检测")
+        self.checkwinbutton.setIcon(QIcon("屏幕检测.png"))
         self.checkwinbutton.clicked.connect(self.checkwinclicked)
         self.grid.addWidget(self.checkwinbutton, 1, 1, 1, 1)
 
         # todo:文件路径显示框
-        self.filepathline = QLineEdit()
+        self.filepathline = Lineedit()
         self.filepathline.setPlaceholderText('请点击右侧按钮选择图片→')
+        self.filepathline.FilepathSignal.connect(self.filepathdrop)
         self.filepathline.setReadOnly(True)
-        self.grid.addWidget(self.filepathline, 2, 0, 1, 6)
+        self.grid.addWidget(self.filepathline, 2, 0, 1, 2)
+
+        # todo:打开图片库
+        self.openstorebutton = QPushButton("打开图片库")
+        self.openstorebutton.setIcon(QIcon("打开.png"))
+        self.openstorebutton.clicked.connect(lambda: self.openstore())
+        self.grid.addWidget(self.openstorebutton, 2, 2, 1, 1)
+
+        # todo:读取图片库
+        self.readstorebutton = QPushButton("添加图片库图片")
+        self.readstorebutton.setIcon(QIcon("图库.png"))
+        self.readstorebutton.clicked.connect(lambda: self.readstore())
+        self.grid.addWidget(self.readstorebutton, 2, 3, 1, 1)
 
         # todo:读取文件按钮
         self.readfilebutton = QPushButton("添加图片文件")
+        self.readfilebutton.setIcon(QIcon("文件.png"))
         self.readfilebutton.clicked.connect(lambda: self.readfile())
-        self.grid.addWidget(self.readfilebutton, 2, 6, 1, 1)
+        self.grid.addWidget(self.readfilebutton, 2, 4, 1, 1)
 
         # todo:读取文件夹按钮
         self.readfolderbutton = QPushButton("添加图片文件夹")
+        self.readfolderbutton.setIcon(QIcon("文件夹.png"))
         self.readfolderbutton.clicked.connect(lambda: self.readfolder())
-        self.grid.addWidget(self.readfolderbutton, 2, 7, 1, 1)
+        self.grid.addWidget(self.readfolderbutton, 2, 5, 1, 1)
 
         # todo:删除文件按钮
         self.deletefilebutton = QPushButton("移除图片")
+        self.deletefilebutton.setIcon(QIcon("删除.png"))
         self.deletefilebutton.clicked.connect(lambda: self.deletefile())
-        self.grid.addWidget(self.deletefilebutton, 2, 8, 1, 1)
+        self.grid.addWidget(self.deletefilebutton, 2, 6, 1, 1)
 
         # todo:清空文件按钮
-        self.deletefilebutton = QPushButton("清空图片")
-        self.deletefilebutton.clicked.connect(lambda: self.clearfile())
-        self.grid.addWidget(self.deletefilebutton, 2, 9, 1, 1)
+        self.deleteallfilebutton = QPushButton("清空图片")
+        self.deleteallfilebutton.setIcon(QIcon("清空.png"))
+        self.deleteallfilebutton.clicked.connect(lambda: self.clearfile())
+        self.grid.addWidget(self.deleteallfilebutton, 2, 7, 1, 1)
 
         # todo:图片预览列表
-        self.list0 = QTableWidget()
+        self.list0 = TableWidget()
+        self.list0.setDragEnabled(True)
+        self.list0.setAcceptDrops(True)
+        self.list0.FilepathSignal.connect(self.filepathdrop)
         self.list0.setRowCount(1)
         self.list0.setColumnCount(1)
         self.list0.setSelectionBehavior(QAbstractItemView.SelectColumns)
@@ -336,7 +392,7 @@ class main(QMainWindow):
         self.list0.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         # self.list0.setFixedSize(1250,250)
         self.list0.setFixedHeight(250)
-        self.grid.addWidget(self.list0, 3, 0, 1, 10)
+        self.grid.addWidget(self.list0, 3, 0, 1, 8)
 
         # todo:文件列表框
         self.list1 = QTableWidget()
@@ -347,7 +403,7 @@ class main(QMainWindow):
         self.list1.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.list1.setVerticalHeaderLabels(["文件名", "类型", "父路径", "宽度", "高度", "色深"])
         self.list1.setHorizontalHeaderLabels(["图片属性"])
-        self.grid.addWidget(self.list1, 0, 8, 2, 2)
+        self.grid.addWidget(self.list1, 0, 6, 2, 2)
         self.widget.setLayout(self.grid)
         self.setCentralWidget(self.widget)
         self.statusBar().showMessage("请添加图片文件")
@@ -365,9 +421,14 @@ class main(QMainWindow):
         self.lb3.close()
     # todo:屏幕检测事件
     def checkwinclicked(self):
-        if self.screen_count > 1:
+        if(self.desktop.screenCount()>1):
+            self.inflabel = QLabel("当前屏幕数:"+str(self.desktop.screenCount())+"(检测到辅屏，已将信号传送到辅屏！)")
             self.lb3.setGeometry(self.win2)
             self.lb3.show()
+            self.statusBar().showMessage("当前屏幕数:(检测到辅屏，已将信号传送到辅屏！)")
+        else:
+            self.lb3.close()
+            self.inflabel = QLabel("当前屏幕数:" + str(self.desktop.screenCount()) + "(未检测到辅屏，输出窗口已关闭！)")
 
 
 
@@ -379,6 +440,22 @@ class main(QMainWindow):
             self.reading == True
             path = QFileDialog.getOpenFileName(self, '请选择图片文件', '', 'Image Files (*.jpg *.png *.jpeg)')
             self.runreadfileThread(path)
+
+    # todo:打开图片库
+    def openstore(self):
+        if(os.path.exists(self.storedir)):
+            startfile(self.storedir)  # 打开文件夹窗口
+        else:
+            self.statusBar().showMessage("图片库文件夹不存在，请检查！")
+
+    # todo:加载图片库事件
+    def readstore(self):
+        if os.path.exists(self.storedir):
+            self.runreadfileThread(self.storedir)
+            self.statusBar().showMessage("已将图片库添加到列表！")
+        else:
+            self.statusBar().showMessage("图片库路径不存在！")
+
 
     # todo:读取文件夹按钮事件
     def readfolder(self):
@@ -454,7 +531,7 @@ class main(QMainWindow):
         self.thraedreadfile.start()
         self.filepathline.setText(path)
 
-    # 读todo:取数据，更新图像列表
+    # todo:读取数据，更新图像列表
     def readending(self):
         self.reading == False
         print(self.data)
@@ -463,7 +540,7 @@ class main(QMainWindow):
         self.list0.setColumnCount(len(self.data.filelist))
         self.list0.setRowCount(1)
         for i in range(len(self.data.filelist)):
-            imagepix = QLabel()
+            imagepix = Label()
             image = self.data.filelist[i]
             imagepix.setPixmap(image["pix"].scaled(image["width"] / image["height"] * 200, 200, Qt.KeepAspectRatio,
                                                    Qt.SmoothTransformation))
@@ -472,13 +549,14 @@ class main(QMainWindow):
             # print("比例：",self.data.filelist[i]["height"]/self.data.filelist[i]["width"])
             # imagepix.setCursor(Qt.CrossCursor)
             imagepix.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
-            imagelist.append(imagepix)
+            # imagelist.append(imagepix)
+            imagepix.FilepathSignal.connect(self.filepathdrop)
             self.list0.setCellWidget(0, i, imagepix)
-        # todo:更新自适应宽高尺寸
+        # 更新自适应宽高尺寸
         self.list0.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.list0.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
 
-        # todo:保存状态
+        # 保存状态
         self.savehistory()
 
     # todo:点击图像列表事件
@@ -533,6 +611,20 @@ class main(QMainWindow):
 
     # todo:读取缓存
     def loadache(self):
+        # 读取软件配置信息
+        if (os.path.exists(os.getcwd() + "/ache/storepath.ache")):
+
+            f = open(os.getcwd() + "/ache/storepath.ache", 'rb')
+            path = pickle.load(f)
+            f.close()
+            print("path",path)
+            self.storedir = path
+            self.changestoredirLine.setText(path)
+            self.changestoredirLinetab4.setText(path)
+        else:
+            self.storedir = os.getcwd() + "/store/"
+
+        # 读取数据缓存
         achepath = os.getcwd() + "/ache/history.ache"
         print(os.path.exists(achepath))
         print(achepath)
@@ -591,38 +683,7 @@ class main(QMainWindow):
         self.makethread.MessageSingle.connect(self.statusBar().showMessage)
         self.makethread.EnddingSingle.connect(self.makeimagethreadend)
         self.makethread.start()
-        #
-        # wmax=1920
-        # hmax=1080
-        # # imagedata = np.zeros([wmax, hmax])
-        # if self.direction=="H":
-        #     copynum=math.ceil(1920/float(self.line1wide.value()+self.line2wide.value()))  #向上取整
-        #     print("copynum",copynum)
-        #     line1=np.array([])
-        #     for i in range(self.line1wide.value()*hmax):
-        #     #     line1 = np.append(line1, np.array(list(self.line1color.getRgb())))
-        #     # line1 = line1.reshape(hmax, self.line1wide.value(), 4)
-        #         line1=np.append(line1,np.array(list(self.line1color.getRgb())))
-        #     line1=line1.reshape(hmax,self.line1wide.value(),4)
-        #
-        #     line2 = np.array([])
-        #     for i in range(self.line2wide.value() * hmax):
-        #     #     line2 = np.append(line2, np.array(list(self.line2color.getRgb())))
-        #     # line2 = line2.reshape(hmax, self.line2wide.value(), 4)
-        #         line2 = np.append(line2, np.array(list(self.line2color.getRgb())))
-        #     line2 = line2.reshape(hmax,self.line2wide.value(), 4)
-        #
-        #     list12=np.hstack((line1, line2))
-        #     list12=list12.astype(np.uint8)
-        #     imagedata=np.tile(list12,(1,copynum,1))
-        #     imagedata=imagedata[:,0:1920,0:3].copy()
-        #     print(imagedata.shape)
-        #     height, width,  bytesPerComponent = imagedata.shape
-        #     bytesPerLine = bytesPerComponent * width  # 表示彩色图像每个像素占用3个（ndarray图像数组的第三维长度）字节的空间
-        #     self.newtempQImg = QImage(imagedata, width, height,bytesPerLine, QImage.Format_RGB888)
-        #     self.newtemppixmap = QPixmap(self.newtempQImg)
-        #     pixtemp=self.newtemppixmap.scaled(self.lbnewiamge.width(),self.lbnewiamge.height())
-        #     self.lbnewiamge.setPixmap(pixtemp)
+
 
     # todo:（tab3）加载新生成图片
     def makeimagethreadend(self, qimage, pixmap):
@@ -652,18 +713,7 @@ class main(QMainWindow):
         self.reading = False
         self.readending()
         self.statusBar().showMessage("已将图片添加到列表！")
-        # filedir, allfilename = os.path.split(filepath)
-        # filename, fileextension = os.path.splitext(allfilename)
-        # filedict=dict()
-        # filedict["alldir"] = filepath  # 文件路径
-        # filedict["parentdir"] = filedir  # 父路径
-        # filedict["allfilename"] = allfilename  # 全名
-        # filedict["filename"] = filename  # 文件名
-        # filedict["fileextension"] = fileextension  # 后缀名
-        # filedict["pix"] = self.newtemppixmap  # 图片对象
-        # filedict["width"] = self.newtemppixmap.width()  # 图片宽度
-        # filedict["depth"] = self.newtemppixmap.depth()  # 图片深度bit
-        # filedict["height"] = self.newtemppixmap.height()  # 图片高度
+
 
     def addtolistandoutbuttonclicked(self):
         pass
@@ -694,7 +744,7 @@ class main(QMainWindow):
 
     # todo:多阶光栅生成按钮点击事件 **********************
     def makemultorderimagebuttonclicked(self):
-        self.makemultorderthread = makemultorderimagethread(self.direction, self.pixelnwideSlider.value(),
+        self.makemultorderthread = makemultorderimagethread(self.directionbox.currentIndex(),self.imagechannelbox.currentIndex(), self.pixelnwideSlider.value(),
                                                             self.MultorderSlider.value())
         self.statusBar().showMessage("正在生成图片...")
         self.makemultorderthread.MessageSingle.connect(self.statusBar().showMessage)
@@ -702,9 +752,13 @@ class main(QMainWindow):
         self.makemultorderthread.start()
 
     # todo:（tab4）加载新生成图片
-    def makemultorderimagethreadend(self, qimage, pixmap):
+    def makemultorderimagethreadend(self, qimage, pixmap,direction):
         self.newtempQImg2 = qimage
         self.newtemppixmap2 = pixmap
+        if direction==0:
+            self.direction2 = "H"
+        else:
+            self.direction2 = "V"
         self.statusBar().showMessage("正在加载图片...")
         pixtemp = self.newtemppixmap2.scaled(self.lbnewiamge.width(), self.lbnewiamge.height())
         self.lbnewiamge2.setPixmap(pixtemp)
@@ -716,8 +770,8 @@ class main(QMainWindow):
             return
         if (not os.path.exists(os.getcwd() + "/temp/")):
             os.makedirs(os.getcwd() + "/temp/")
-        print(os.getcwd() + "/temp/" + self.direction + "_" + "像素宽度（"+str(self.pixelnwideSlider.value())+")_阶数（"+str(self.MultorderSlider.value()) + "）.png")
-        filepath = os.getcwd() + "/temp/" + self.direction + "_" + "像素宽度（"+str(self.pixelnwideSlider.value())+")_阶数（"+str(self.MultorderSlider.value()) + "）.png"
+        print(os.getcwd() + "/temp/" + "方向："+ self.direction2 + "_" + "像素宽度："+str(self.pixelnwideSlider.value())+"_阶数："+str(self.MultorderSlider.value()) + ".png")
+        filepath = os.getcwd() + "/temp/" + "方向："+ self.direction2 + "_" + "像素宽度："+str(self.pixelnwideSlider.value())+"_阶数："+str(self.MultorderSlider.value()) + ".png"
         try:
             self.newtempQImg2.save(filepath)
         except Exception as a:
@@ -727,18 +781,32 @@ class main(QMainWindow):
         self.reading = False
         self.readending()
         self.statusBar().showMessage("已将图片添加到列表！")
-        # filedir, allfilename = os.path.split(filepath)
-        # filename, fileextension = os.path.splitext(allfilename)
-        # filedict=dict()
-        # filedict["alldir"] = filepath  # 文件路径
-        # filedict["parentdir"] = filedir  # 父路径
-        # filedict["allfilename"] = allfilename  # 全名
-        # filedict["filename"] = filename  # 文件名
-        # filedict["fileextension"] = fileextension  # 后缀名
-        # filedict["pix"] = self.newtemppixmap  # 图片对象
-        # filedict["width"] = self.newtemppixmap.width()  # 图片宽度
-        # filedict["depth"] = self.newtemppixmap.depth()  # 图片深度bit
-        # filedict["height"] = self.newtemppixmap.height()  # 图片高度
+
+    # todo:多级光栅图片添加到列表
+    def addtostoretab4buttonclicked(self):
+        if (self.newtemppixmap2 == []):
+            self.statusBar().showMessage("请先生成图片")
+            return
+        if (not os.path.exists(self.storedir)):
+            os.makedirs(self.storedir)
+        print(self.storedir+"/" + "方向："+ self.direction2 + "_" + "像素宽度："+str(self.pixelnwideSlider.value())+"_阶数："+str(self.MultorderSlider.value()) + ".png")
+        filepath = self.storedir+"/" + "方向："+self.direction2 + "_" + "像素宽度："+str(self.pixelnwideSlider.value())+"_阶数："+str(self.MultorderSlider.value()) + ".png"
+        if os.path.exists(filepath):
+            self.statusBar().showMessage("无需保存，图片库中已包含此图像!(方向："+self.direction2 + "  像素宽度："+str(self.pixelnwideSlider.value())+"  阶数："+str(self.MultorderSlider.value()) + ")")
+            return
+        try:
+
+            self.newtempQImg2.save(filepath)
+
+        except Exception as a:
+            print(a)
+        # self.reading = True
+        # self.data.addfile(filepath)
+        # self.reading = False
+        # self.readending()
+        self.statusBar().showMessage("已将图片保存到图片库！(方向："+self.direction2 + "  像素宽度："+str(self.pixelnwideSlider.value())+"  阶数："+str(self.MultorderSlider.value()) + ")")
+
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

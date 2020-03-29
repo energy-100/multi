@@ -22,7 +22,7 @@ class imageObject():
                 self.filelist.append(file)
             return file
         # filepath是文件夹
-        else:
+        elif(os.path.isdir(filepath)):
             print("是文件夹")
             newaddfilelist = []
             files = os.listdir(filepath)
@@ -44,6 +44,8 @@ class imageObject():
                         self.filelist.append(file)
                         newaddfilelist.append(file)
 
+            else:
+                return
             return newaddfilelist
 
     # 读取单文件

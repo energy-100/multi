@@ -22,7 +22,7 @@ class readfilethread(QThread):
         super(readfilethread, self).__init__()
     def run(self):
         temp=self.imageobject.addfile(self.filepath,self.imageobject)
-        print("长度：",len(temp))
+        # print("长度：",len(temp))
         self.EnddingSingle.emit()
 
 class savehistorythread(QThread):
@@ -133,15 +133,42 @@ class makeimage(QThread):
             self.newtempQImg = QImage(imagedata, width, height, bytesPerLine, QImage.Format_RGB888)
             self.newtemppixmap = QPixmap(self.newtempQImg)
 
-        self.EnddingSingle.emit(self.newtempQImg,self.newtemppixmap)
+        # if self.direction == "V":
+        #     copynum = math.ceil(1080 / float(self.line1wide + self.line2wide))  # 向上取整
+        #     print("copynum", copynum)
+        #     line1 = np.array([])
+        #     for i in range(self.line1wide * wmax):
+        #         #     line1 = np.append(line1, np.array(list(self.line1color.getRgb())))
+        #         # line1 = line1.reshape(hmax, self.line1wide.value(), 4)
+        #         line1 = np.append(line1, self.line1color)
+        #     line1 = line1.reshape(hmax, self.line1wide, 4)
+        #
+        #     line2 = np.array([])
+        #     for i in range(self.line2wide * hmax):
+        #         #     line2 = np.append(line2, np.array(list(self.line2color.getRgb())))
+        #         # line2 = line2.reshape(hmax, self.line2wide.value(), 4)
+        #         line2 = np.append(line2, self.line2color)
+        #     line2 = line2.reshape(hmax, self.line2wide, 4)
+        #
+        #     list12 = np.hstack((line1, line2))
+        #     list12 = list12.astype(np.uint8)
+        #     imagedata = np.tile(list12, (1, copynum, 1))
+        #     imagedata = imagedata[:, 0:1920, 0:3].copy()
+        #     print(imagedata.shape)
+        #     height, width, bytesPerComponent = imagedata.shape
+        #     bytesPerLine = bytesPerComponent * width  # 表示彩色图像每个像素占用3个（ndarray图像数组的第三维长度）字节的空间
+        #     self.newtempQImg = QImage(imagedata, width, height, bytesPerLine, QImage.Format_RGB888)
+        #     self.newtemppixmap = QPixmap(self.newtempQImg)
+        # self.EnddingSingle.emit(self.newtempQImg,self.newtemppixmap)
 
 class makemultorderimagethread(QThread):
-    EnddingSingle = QtCore.pyqtSignal(QImage, QPixmap)
+    EnddingSingle = QtCore.pyqtSignal(QImage, QPixmap,int)
     ProcessSingle = QtCore.pyqtSignal(float)
     MessageSingle = QtCore.pyqtSignal(str)
 
-    def __init__(self, direction: str, pixelnwide: int, ordernum: int):
+    def __init__(self, direction:int,channel:int, pixelnwide: int, ordernum: int):
         self.direction = direction
+        self.channel = channel
         self.pixelnwide = pixelnwide
         self.ordernum = ordernum
         super(makemultorderimagethread, self).__init__()
@@ -150,31 +177,68 @@ class makemultorderimagethread(QThread):
         wmax = 1920
         hmax = 1080
         # imagedata = np.zeros([wmax, hmax])
-        if self.direction == "H":
+        if self.direction == 0:
             perordercolorspan=math.floor(256/self.ordernum)  #每阶颜色跨度
             # copynum = math.ceil(wmax / float(self.line1wide + self.line2wide))
             periodunm=math.ceil(wmax/(self.pixelnwide * self.ordernum)) # 向上取整
             list12=[]
-
+            lineper=[]
             for order in range(self.ordernum):
                 self.MessageSingle.emit("正在计算单周期内第"+str(order+1)+"阶像素点")
                 color=order * perordercolorspan
-                lineper = np.array([])
-                for i in range(self.pixelnwide * hmax):
-                    lineper = np.append(lineper, np.array([color,color,color,color]))
-                lineper = lineper.reshape(hmax, self.pixelnwide, 4)
+
+                # lineper = np.array([])
+                # for i in range(self.pixelnwide * hmax):
+                #     self.MessageSingle.emit("正在计算单周期内第" + str(order + 1) + "阶的第"+str(i)+"个像素点")
+                #     lineper = np.append(lineper, np.array([color,color,color,color]))
+                # lineper = lineper.reshape(hmax, self.pixelnwide, 4)
+
+                # 速度优化版本
                 if order==0:
+                    lineper = np.full((hmax, self.pixelnwide, 4), color)
                     list12=lineper
                 else:
+                    lineper = np.full_like(lineper, color)
                     list12 = np.hstack((list12, lineper))
             list12 = list12.astype(np.uint8)
             self.MessageSingle.emit("正在进行周期复制")
             imagedata = np.tile(list12, (1, periodunm, 1))
             imagedata = imagedata[:, 0:1920, 0:3].copy()
             print(imagedata.shape)
-            height, width, bytesPerComponent = imagedata.shape
-            bytesPerLine = bytesPerComponent * width  # 表示彩色图像每个像素占用3个（ndarray图像数组的第三维长度）字节的空间
-            self.newtempQImg = QImage(imagedata, width, height, bytesPerLine, QImage.Format_RGB888)
-            self.newtemppixmap = QPixmap(self.newtempQImg)
+        elif self.direction == 1:
+            perordercolorspan = math.floor(256 / self.ordernum)  # 每阶颜色跨度
+            # copynum = math.ceil(wmax / float(self.line1wide + self.line2wide))
+            periodunm = math.ceil(hmax / (self.pixelnwide * self.ordernum))  # 向上取整
+            list12 = []
+            lineper = []
+            for order in range(self.ordernum):
+                self.MessageSingle.emit("正在计算单周期内第" + str(order + 1) + "阶像素点")
+                color = order * perordercolorspan
 
-        self.EnddingSingle.emit(self.newtempQImg, self.newtemppixmap)
+                # lineper = np.array([])
+                # for i in range(self.pixelnwide * hmax):
+                #     self.MessageSingle.emit("正在计算单周期内第" + str(order + 1) + "阶的第"+str(i)+"个像素点")
+                #     lineper = np.append(lineper, np.array([color,color,color,color]))
+                # lineper = lineper.reshape(hmax, self.pixelnwide, 4)
+
+                # 速度优化版本
+                if order == 0:
+                    lineper = np.full((self.pixelnwide, wmax,  4), color)
+                    list12 = lineper
+                else:
+                    lineper = np.full_like(lineper, color)
+                    print(list12.shape, lineper.shape)
+                    list12 = np.vstack((list12, lineper))
+
+            list12 = list12.astype(np.uint8)
+            self.MessageSingle.emit("正在进行周期复制")
+            imagedata = np.tile(list12, (periodunm,1, 1))
+            imagedata = imagedata[0:hmax, 0:wmax, 0:3].copy()
+
+        print(imagedata.shape)
+        height, width, bytesPerComponent = imagedata.shape
+        bytesPerLine = bytesPerComponent * width  # 表示彩色图像每个像素占用3个（ndarray图像数组的第三维长度）字节的空间
+        self.newtempQImg = QImage(imagedata, width, height, bytesPerLine, QImage.Format_RGB888)
+        self.newtemppixmap = QPixmap(self.newtempQImg)
+
+        self.EnddingSingle.emit(self.newtempQImg, self.newtemppixmap,self.direction)

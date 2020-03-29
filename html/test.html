@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+
+    <style>
+    *{
+        margin: 0;
+        padding: 0;
+    }
+    body{
+        font-family: Verdana, Arial, Helvetica, sans-serif;
+        font-size: 16px;
+        color: #222222;
+    }
+    #box{
+        width: 600px;
+        margin: 20px auto;
+        text-align: center;
+    }
+    #content{
+        background-color: #FF9C01;
+    }
+    h4,p{
+        padding: 10px 0;
+    }
+    #btn{
+        width: 80px;
+    }
+    #spread{
+        display: none;
+    }
+</style>
+</head>
+<body>
+    <div id="box">
+        <div id="content">
+            <h4>手机</h4>
+            <p>价格:1499 2999 3999 5999 6999</p>
+            <div id="spread">
+                <p>魅族 note5 小米 华为 OPPO</p>
+                <p>超长待机 防水 1080高清屏</p>
+            </div>
+        </div>
+        <button id="btn">展开</button>
+    </div>
+
+
+    <script src="jquery-3.4.1.js"></script>
+    <script>
+        var btn = $('#btn')
+        var spread = $('#spread')
+        btn.click(function () {
+            spread.slideToggle()
+        })
+    </script>
+</body>
+</html>
+
+
+
+

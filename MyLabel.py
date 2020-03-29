@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QWidget, QApplication, QLabel,QFrame
 from PyQt5.QtCore import QRect, Qt
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QGuiApplication
 from PyQt5 import QtCore
-
+from PyQt5.QtWidgets import *
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import *
@@ -19,6 +19,28 @@ class Label(QLabel):
 
     def __init__(self, parent=None):
         super(Label, self).__init__(parent)
+        # self.setDragEnabled(True)
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, evn):
+        evn.accept()
+
+    def dropEvent(self, evn):
+        print("event:",evn.mimeData().text())
+        if evn.mimeData().text()!="":
+            filename = evn.mimeData().text().split("///")[1]
+            self.FilepathSignal.emit(filename)
+
+
+class Lineedit(QLineEdit):
+# class Label(QWidget,QPainter):
+    MessageSignal = QtCore.pyqtSignal(str)
+    FilepathSignal = QtCore.pyqtSignal(str)
+
+    def __init__(self, parent=None):
+        super(Lineedit, self).__init__(parent)
+        self.setDragEnabled(True)
+        self.setAcceptDrops(True)
 
 
     def dragEnterEvent(self, evn):
@@ -26,10 +48,28 @@ class Label(QLabel):
 
     def dropEvent(self, evn):
         filename = evn.mimeData().text().split("///")[1]
-        print(filename)
-        print(filename)
+        self.setText(filename)
         self.FilepathSignal.emit(filename)
 
+
+class TableWidget(QTableWidget):
+# class Label(QWidget,QPainter):
+    MessageSignal = QtCore.pyqtSignal(str)
+    FilepathSignal = QtCore.pyqtSignal(str)
+
+    def __init__(self, parent=None):
+        super(TableWidget, self).__init__(parent)
+        self.setDragEnabled(True)
+        self.setAcceptDrops(True)
+
+
+    def dragEnterEvent(self, evn):
+        evn.accept()
+
+    def dropEvent(self, evn):
+        filename = evn.mimeData().text().split("///")[1]
+        self.FilepathSignal.emit(filename)
+        print(filename)
 
 class editimageLabel(QFrame):
 # class editimageLabel(QLabel):
@@ -90,7 +130,8 @@ class editimageLabel(QFrame):
     '''重载一下鼠标按下事件(单击)'''
 
     def mousePressEvent(self, event):
-        pass
+        if self.scaledImg==[]:
+            return
         if event.buttons() == QtCore.Qt.LeftButton:  # 左键按下
             # print("鼠标左键单击")  # 响应测试语句
             self.isLeftPressed = True;  # 左键按下(图片被点住),置Ture
@@ -112,6 +153,8 @@ class editimageLabel(QFrame):
     '''重载一下滚轮滚动事件'''
 
     def wheelEvent(self, event):
+        if self.scaledImg == []:
+            return
         print("坐标：",event.x(),event.y())
         print(event.x())
         #        if event.delta() > 0:                                                 # 滚轮上滚,PyQt4
@@ -158,6 +201,8 @@ class editimageLabel(QFrame):
     '''重载一下鼠标键公开事件'''
 
     def mouseReleaseEvent(self, event):
+        if self.scaledImg==[]:
+            return
         if event.buttons() == QtCore.Qt.LeftButton:  # 左键释放
             self.isLeftPressed = False;  # 左键释放(图片被点住),置False
             self.singleOffset = QPoint(event.x(), event.y())
@@ -171,6 +216,8 @@ class editimageLabel(QFrame):
     '''重载一下鼠标移动事件'''
 
     def mouseMoveEvent(self, event):
+        if self.scaledImg==[]:
+            return
         if self.isLeftPressed:  # 左键按下
             # print("鼠标左键按下，移动鼠标")  # 响应测试语句
             self.endMousePosition = event.pos() - self.preMousePosition  # 鼠标当前位置-先前位置=单次偏移量
