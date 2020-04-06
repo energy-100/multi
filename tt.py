@@ -1,3 +1,3 @@
 import os
-f="D:\PyCharm_GitHub_local_Repository\.gg.txt"
-print(os.path.splitext(f)[1])
+for i in range(-5,5,1):
+    print(i)

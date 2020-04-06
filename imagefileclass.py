@@ -64,3 +64,7 @@ class imageObject():
         filedict["depth"] = filepix.depth()  # 图片深度bit
         filedict["height"] = filepix.height()  # 图片高度
         return filedict
+
+    def update(self, data):
+            self.filelist=data.filelist
+            # self.

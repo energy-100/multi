@@ -12,6 +12,22 @@ import math
 import threading
 import time
 import numpy as np
+
+# todo: 系统屏幕数量监听线程
+class getwincountthread(QThread):
+    wincountSingle = QtCore.pyqtSignal(int)
+    def __init__(self):
+        super(getwincountthread, self).__init__()
+
+    def run(self):
+        self.count=0
+        while True:
+            countcurrent=QApplication.desktop().screenCount()
+            if countcurrent!=self.count:
+                self.wincountSingle.emit(countcurrent)
+                self.count=countcurrent
+
+# todo:读取文件线程
 class readfilethread(QThread):
     EnddingSingle = QtCore.pyqtSignal()
     ProcessSingle = QtCore.pyqtSignal(float)
@@ -25,29 +41,30 @@ class readfilethread(QThread):
         # print("长度：",len(temp))
         self.EnddingSingle.emit()
 
+# todo:保存历史线程
 class savehistorythread(QThread):
     EnddingSingle = QtCore.pyqtSignal()
     ProcessSingle = QtCore.pyqtSignal(float)
     MessageSingle = QtCore.pyqtSignal(str)
-    def __init__(self, achepath:str,imageobject:imageObject,selectindex:int):
+    def __init__(self, achepath:str,setting:dict,imageobject:imageObject,selectindex:int):
         self.imageobject=imageobject
         self.selectindex = selectindex
         self.achepath = achepath
+        self.setting=setting
         super(savehistorythread, self).__init__()
     def run(self):
-        # 用于缓存的字典
-        datalist=dict()
-        datalist["pathlist"]=[item["alldir"] for item in self.imageobject.filelist]
-        datalist["selectindex"]=self.selectindex
-        datalist["exittime"]=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        #变换，将文件对象转化为文件路径
+        self.setting["filelist"]=[item["alldir"] for item in self.setting["filelist"]]
+        self.setting["t7tempimagelist"]=[item["alldir"] for item in self.setting["t7tempimagelist"]]
 
         # 保存缓存
         if (not os.path.exists(self.achepath)):
             os.makedirs(self.achepath)
         with open(self.achepath+"history.ache", "wb") as file:
-            pickle.dump(datalist, file, True)
+            pickle.dump(self.setting, file, True)
         self.EnddingSingle.emit()
 
+# todo:读取历史线程
 class readhostorythread(QThread):
     EnddingSingle = QtCore.pyqtSignal(dict)
     ProcessSingle = QtCore.pyqtSignal(float)
@@ -63,17 +80,21 @@ class readhostorythread(QThread):
         datalist = pickle.load(f)
         f.close()
 
-        for filepath in datalist["pathlist"]:
+        # 还原变换，将文件路径转化为文件对象
+        for filepath in datalist["filelist"]:
             self.data.addfile(filepath,self.data)
-        # print(self.data.filelist)
-
+        datalist["filelist"]=self.data.filelist
+        self.data = imageObject()
+        for filepath in datalist["t7tempimagelist"]:
+            self.data.addfile(filepath,self.data)
+        datalist["t7tempimagelist"]=self.data.filelist
         # 传递给主函数的字典
-        data = dict()
-        data["data"]=self.data
-        data["selectindex"]=datalist["selectindex"]
-        data["exittime"]=datalist["exittime"]
+        # data = dict()
+        # data["data"]=self.data
+        # data["selectindex"]=datalist["selectindex"]
+        # data["exittime"]=datalist["exittime"]
 
-        self.EnddingSingle.emit(data)
+        self.EnddingSingle.emit(datalist)
 
 
 class DownThread:
@@ -90,6 +111,7 @@ class DownThread:
             n -= 1
             time.sleep(1)
 
+ # todo:彩色生成线程
 class makeimage(QThread):
     EnddingSingle = QtCore.pyqtSignal(QImage,QPixmap)
     ProcessSingle = QtCore.pyqtSignal(float)
@@ -160,8 +182,92 @@ class makeimage(QThread):
         #     self.newtempQImg = QImage(imagedata, width, height, bytesPerLine, QImage.Format_RGB888)
         #     self.newtemppixmap = QPixmap(self.newtempQImg)
         # self.EnddingSingle.emit(self.newtempQImg,self.newtemppixmap)
+# todo:彩色图生成线程
+# class makemultorderimagethread(QThread):
+#     EnddingSingle = QtCore.pyqtSignal(QImage, QPixmap,int)
+#     ProcessSingle = QtCore.pyqtSignal(float)
+#     MessageSingle = QtCore.pyqtSignal(str)
+#
+#     def __init__(self, direction:int,channel:int, pixelnwide: int, ordernum: int):
+#         self.direction = direction
+#         self.channel = channel
+#         self.pixelnwide = pixelnwide
+#         self.ordernum = ordernum
+#         super(makemultorderimagethread, self).__init__()
+#
+#     def run(self):
+#         wmax = 1920
+#         hmax = 1080
+#         # imagedata = np.zeros([wmax, hmax])
+#         if self.direction == 0:
+#             perordercolorspan=math.floor(256/self.ordernum)  #每阶颜色跨度
+#             # copynum = math.ceil(wmax / float(self.line1wide + self.line2wide))
+#             periodunm=math.ceil(wmax/(self.pixelnwide * self.ordernum)) # 向上取整
+#             list12=[]
+#             lineper=[]
+#             for order in range(self.ordernum):
+#                 self.MessageSingle.emit("正在计算单周期内第"+str(order+1)+"阶像素点")
+#                 color=order * perordercolorspan
+#
+#                 # lineper = np.array([])
+#                 # for i in range(self.pixelnwide * hmax):
+#                 #     self.MessageSingle.emit("正在计算单周期内第" + str(order + 1) + "阶的第"+str(i)+"个像素点")
+#                 #     lineper = np.append(lineper, np.array([color,color,color,color]))
+#                 # lineper = lineper.reshape(hmax, self.pixelnwide, 4)
+#
+#                 # 速度优化版本
+#                 if order==0:
+#                     lineper = np.full((hmax, self.pixelnwide, 4), color)
+#                     list12=lineper
+#                 else:
+#                     lineper = np.full_like(lineper, color)
+#                     list12 = np.hstack((list12, lineper))
+#             list12 = list12.astype(np.uint8)
+#             self.MessageSingle.emit("正在进行周期复制")
+#             imagedata = np.tile(list12, (1, periodunm, 1))
+#             imagedata = imagedata[:, 0:1920, 0:3].copy()
+#             print(imagedata.shape)
+#         elif self.direction == 1:
+#             perordercolorspan = math.floor(256 / self.ordernum)  # 每阶颜色跨度
+#             # copynum = math.ceil(wmax / float(self.line1wide + self.line2wide))
+#             periodunm = math.ceil(hmax / (self.pixelnwide * self.ordernum))  # 向上取整
+#             list12 = []
+#             lineper = []
+#             for order in range(self.ordernum):
+#                 self.MessageSingle.emit("正在计算单周期内第" + str(order + 1) + "阶像素点")
+#                 color = order * perordercolorspan
+#
+#                 # lineper = np.array([])
+#                 # for i in range(self.pixelnwide * hmax):
+#                 #     self.MessageSingle.emit("正在计算单周期内第" + str(order + 1) + "阶的第"+str(i)+"个像素点")
+#                 #     lineper = np.append(lineper, np.array([color,color,color,color]))
+#                 # lineper = lineper.reshape(hmax, self.pixelnwide, 4)
+#
+#                 # 速度优化版本
+#                 if order == 0:
+#                     lineper = np.full((self.pixelnwide, wmax,  4), color)
+#                     list12 = lineper
+#                 else:
+#                     lineper = np.full_like(lineper, color)
+#                     print(list12.shape, lineper.shape)
+#                     list12 = np.vstack((list12, lineper))
+#
+#             list12 = list12.astype(np.uint8)
+#             self.MessageSingle.emit("正在进行周期复制")
+#             imagedata = np.tile(list12, (periodunm,1, 1))
+#             imagedata = imagedata[0:hmax, 0:wmax, 0:3].copy()
+#
+#         print(imagedata.shape)
+#         height, width, bytesPerComponent = imagedata.shape
+#         bytesPerLine = bytesPerComponent * width  # 表示彩色图像每个像素占用3个（ndarray图像数组的第三维长度）字节的空间
+#         self.newtempQImg = QImage(imagedata, width, height, bytesPerLine, QImage.Format_RGB888)
+#         self.newtemppixmap = QPixmap(self.newtempQImg)
+#
+#         self.EnddingSingle.emit(self.newtempQImg, self.newtemppixmap,self.direction)
 
-class makemultorderimagethread(QThread):
+# todo: 光栅图片生成线程
+
+class rasterimagethread(QThread):
     EnddingSingle = QtCore.pyqtSignal(QImage, QPixmap,int)
     ProcessSingle = QtCore.pyqtSignal(float)
     MessageSingle = QtCore.pyqtSignal(str)
@@ -171,7 +277,7 @@ class makemultorderimagethread(QThread):
         self.channel = channel
         self.pixelnwide = pixelnwide
         self.ordernum = ordernum
-        super(makemultorderimagethread, self).__init__()
+        super(rasterimagethread, self).__init__()
 
     def run(self):
         wmax = 1920
@@ -236,6 +342,136 @@ class makemultorderimagethread(QThread):
             imagedata = imagedata[0:hmax, 0:wmax, 0:3].copy()
 
         print(imagedata.shape)
+        height, width, bytesPerComponent = imagedata.shape
+        bytesPerLine = bytesPerComponent * width  # 表示彩色图像每个像素占用3个（ndarray图像数组的第三维长度）字节的空间
+        self.newtempQImg = QImage(imagedata, width, height, bytesPerLine, QImage.Format_RGB888)
+        self.newtemppixmap = QPixmap(self.newtempQImg)
+
+        self.EnddingSingle.emit(self.newtempQImg, self.newtemppixmap,self.direction)
+
+
+class vorteximagethread(QThread):
+    EnddingSingle = QtCore.pyqtSignal(QImage, QPixmap,int)
+    ProcessSingle = QtCore.pyqtSignal(float)
+    MessageSingle = QtCore.pyqtSignal(str)
+
+    def __init__(self, direction:int,displaymode:int, par1: int, par2: int,par3:float):
+        self.direction = direction
+        self.displaymode = displaymode
+        self.par1 = par1
+        self.par2 = par2
+        self.par3 = par3
+        # self.par1 = 500
+        # self.par2 = 1000
+        # self.par3 = 0.2
+        super(vorteximagethread, self).__init__()
+
+    def run(self):
+        w=1920
+        h=1080
+        if self.direction == 0:
+            imagedata=np.zeros((w+1,h+1,1),dtype=int)
+            i=0
+            for x in range(int(-w/2),int(w/2)):
+                j=0
+                for y in range(int(-h/2),int(h/2)):
+                    arctanyx=math.atan2(y,x)
+                    color=self.par1*arctanyx+(2*math.pi/self.par2)*x*math.sin(self.par3)
+                    color=color%(2*math.pi)
+                    if self.displaymode == 0:
+                        color = int(round(color / (2 * math.pi) * 255))
+                    else:
+                        color = int(255 - round(color / (2 * math.pi) * 255))
+                    imagedata[i][j][0]=color
+                    j +=1
+                i +=1
+                self.MessageSingle.emit("已完成"+str(i)+"/"+str(w)+"列")
+        else:
+            imagedata = np.zeros((w + 1, h + 1, 1), dtype=int)
+            i = 0
+            for x in range(int(-w / 2), int(w / 2)):
+                j = 0
+                for y in range(int(-h / 2), int(h / 2)):
+                    arctanyx = math.atan2(x, y)
+                    color = self.par1 * arctanyx + (2 * math.pi / self.par2) * y * math.sin(self.par3)
+                    color = color % (2 * math.pi)
+                    if self.displaymode == 0:
+                        color = int(round(color / (2 * math.pi) * 255))
+                    else:
+                        color = int(255 - round(color / (2 * math.pi) * 255))
+                    imagedata[i][j][0] = color
+                    j += 1
+                i += 1
+                self.MessageSingle.emit("已完成" + str(i) + "/" + str(w) + "列")
+
+
+
+        imagedata=np.swapaxes(imagedata,0,1)
+        imagedata=np.tile(imagedata, (1,1,4))
+        imagedata = imagedata[0:h, 0:w, 0:3].copy()
+        imagedata = imagedata.astype(np.uint8)
+        height, width, bytesPerComponent = imagedata.shape
+        bytesPerLine = bytesPerComponent * width  # 表示彩色图像每个像素占用3个（ndarray图像数组的第三维长度）字节的空间
+        self.newtempQImg = QImage(imagedata, width, height, bytesPerLine, QImage.Format_RGB888)
+        self.newtemppixmap = QPixmap(self.newtempQImg)
+
+        self.EnddingSingle.emit(self.newtempQImg, self.newtemppixmap,self.direction)
+
+
+class diffimagethread(QThread):
+    EnddingSingle = QtCore.pyqtSignal(QImage, QPixmap,int)
+    ProcessSingle = QtCore.pyqtSignal(float)
+    MessageSingle = QtCore.pyqtSignal(str)
+
+    def __init__(self, direction:int,displaymode:int, par1: int, par2: int):
+        self.direction = direction
+        self.displaymode = displaymode
+        self.par1 = par1
+        self.par2 = par2
+        super(diffimagethread, self).__init__()
+
+    def run(self):
+        w=1920
+        h=1080
+        if self.direction == 0:
+            imagedata=np.zeros((w+1,h+1,1),dtype=int)
+            i=0
+            for x in range(int(-w/2),int(w/2)):
+                j=0
+                for y in range(int(-h/2),int(h/2)):
+                    color=(2*math.pi/self.par1)*(x**2+y**2)/(2*self.par2)
+                    color=color%(2*math.pi)
+                    if self.displaymode == 0:
+                        color = int(round(color / (2 * math.pi) * 255))
+                    else:
+                        color = int(255 - round(color / (2 * math.pi) * 255))
+                    imagedata[i][j][0]=color
+                    j +=1
+                i +=1
+                self.MessageSingle.emit("已完成"+str(i)+"/"+str(w)+"列")
+        else:
+            imagedata = np.zeros((w + 1, h + 1, 1), dtype=int)
+            i = 0
+            for x in range(int(-w / 2), int(w / 2)):
+                j = 0
+                for y in range(int(-h / 2), int(h / 2)):
+                    color=(2*math.pi/self.par1)*(x**2+y**2)/(2*self.par2)
+                    color = color % (2 * math.pi)
+                    if self.displaymode==0:
+                        color = int(round(color / (2 * math.pi) * 255))
+                    else:
+                        color = int(255-round(color / (2 * math.pi) * 255))
+                    imagedata[i][j][0] = color
+                    j += 1
+                i += 1
+                self.MessageSingle.emit("已完成" + str(i) + "/" + str(w) + "列")
+
+
+
+        imagedata=np.swapaxes(imagedata,0,1)
+        imagedata=np.tile(imagedata, (1,1,4))
+        imagedata = imagedata[0:h, 0:w, 0:3].copy()
+        imagedata = imagedata.astype(np.uint8)
         height, width, bytesPerComponent = imagedata.shape
         bytesPerLine = bytesPerComponent * width  # 表示彩色图像每个像素占用3个（ndarray图像数组的第三维长度）字节的空间
         self.newtempQImg = QImage(imagedata, width, height, bytesPerLine, QImage.Format_RGB888)
