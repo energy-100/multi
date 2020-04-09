@@ -211,17 +211,17 @@ class main(QMainWindow):
         self.tab2 = self.imagetab.addTab(self.tab2widget, "图片编辑")
         # self.tab3 = self.imagetab.addTab(self.tab3widget, "二阶光栅图片生成")
 
-        self.tab4widget=rasterwidget(self.data,self.settingdict, self.statusBar(), self.newtemppixmap2)
+        self.tab4widget=rasterwidget(self.data,self.settingdict, self.statusBar(), self.newtemppixmap2,self.progressBar)
         self.tab4widget.addtolistenddingSignal.connect(self.readending)
         self.tab4widget.settingchangeSignal.connect(self.savehistory)
         self.tab4widget.massageoutSignal.connect(self.statusBar().showMessage)
 
-        self.tab5widget = vortexwidget(self.data, self.settingdict, self.statusBar(), self.newtemppixmap2)
+        self.tab5widget = vortexwidget(self.data, self.settingdict, self.statusBar(), self.newtemppixmap2,self.progressBar)
         self.tab5widget.addtolistenddingSignal.connect(self.readending)
         self.tab5widget.settingchangeSignal.connect(self.savehistory)
         self.tab5widget.massageoutSignal.connect(self.statusBar().showMessage)
 
-        self.tab6widget = diffwidget(self.data, self.settingdict, self.statusBar(), self.newtemppixmap2)
+        self.tab6widget = diffwidget(self.data, self.settingdict, self.statusBar(), self.newtemppixmap2,self.progressBar)
         self.tab6widget.addtolistenddingSignal.connect(self.readending)
         self.tab6widget.settingchangeSignal.connect(self.savehistory)
         self.tab6widget.massageoutSignal.connect(self.statusBar().showMessage)
@@ -235,7 +235,7 @@ class main(QMainWindow):
         self.tab4 = self.imagetab.addTab(self.tab4widget ,"多阶光栅图片生成")
         self.tab5 = self.imagetab.addTab(self.tab5widget ,"涡旋光束图片生成")
         self.tab6 = self.imagetab.addTab(self.tab6widget ,"衍射光束图片生成")
-        self.tab7 = self.imagetab.addTab(self.tab7widget ,"连续图像输出")
+        # self.tab7 = self.imagetab.addTab(self.tab7widget ,"连续图像输出")
         self.tabinf = self.imagetab.addTab(self.browser, "说明文档")
         # self.tabinf = self.imagetab.addTab(self.tabinfwidget, "说明文档")
         # self.tab1=self.imagetab.addTab(self.lb, "辅屏画面预览")
@@ -246,6 +246,8 @@ class main(QMainWindow):
         self.imagetab.setTabIcon(self.tab2, QtGui.QIcon('编辑图片.png'))
         # self.imagetab.setTabIcon(self.tab3, QtGui.QIcon('picture.png'))
         self.imagetab.setTabIcon(self.tab4, QtGui.QIcon('多光栅图片生成.png'))
+        self.imagetab.setTabIcon(self.tab5, QtGui.QIcon('多光栅图片生成.png'))
+        self.imagetab.setTabIcon(self.tab6, QtGui.QIcon('多光栅图片生成.png'))
         self.imagetab.setTabIcon(self.tabinf, QtGui.QIcon('ins.png'))
         self.grid.addWidget(self.imagetab, 0, 0, 1, 6)
 
@@ -270,6 +272,7 @@ class main(QMainWindow):
 
         # todo:修改库目录
         self.changestorebutton = QPushButton("修改图片库路径")
+        self.changestorebutton.setIcon(QIcon("路径.png"))
         # self.openstorebutton.setIcon(QIcon("打开.png"))
         self.changestorebutton.clicked.connect(self.changestoreclicked)
         self.grid.addWidget(self.changestorebutton, 1, 2, 1, 1)
@@ -400,7 +403,7 @@ class main(QMainWindow):
         else:
             tempindex = self.list0.currentIndex().column()
             file = self.data.filelist.pop(self.list0.currentIndex().column())
-            self.savehistory()
+            # self.savehistory()
             self.readending()
             if tempindex == len(self.data.filelist):
                 self.list0.selectColumn(len(self.data.filelist) - 1)
@@ -413,10 +416,7 @@ class main(QMainWindow):
     # todo:清空图片事件
     def clearfile(self):
         self.data.filelist = []
-        self.list0.clearContents()
-        self.list1.clearContents()
-        self.list0.setColumnCount(0)
-        self.list0.setRowCount(0)
+        self.readending()
         self.lb.clear()
         # self.lb2.clear()
         self.lb3.clear()
@@ -532,6 +532,7 @@ class main(QMainWindow):
 
     # todo:保存状态函数
     def savehistory(self):
+
         achepath = os.getcwd() + "/ache/"
         print("缓存：", self.list0.currentIndex().column())
         setting=dict()
@@ -592,7 +593,6 @@ class main(QMainWindow):
         self.data.filelist = setting["filelist"]
         lasttime = setting["exittime"]
         self.reading = False
-        self.readending()
         self.list0.selectColumn(setting["list0index"])
         # print("self.list0.currentIndex().column()", self.list0.currentIndex().column())
         self.list0Rowindexchanged()
@@ -616,10 +616,7 @@ class main(QMainWindow):
         self.tab7widget.update()
         self.tab7widget.imagelist.selectColumn(setting["t7listindex"])
         self.tab7widget.namelist.selectRow(setting["t7listindex"])
-
-
-
-
+        self.readending()
         self.statusBar().showMessage("已加载缓存！（上次退出时间：" + lasttime + ")")
 
 

@@ -271,6 +271,8 @@ class rasterimagethread(QThread):
     EnddingSingle = QtCore.pyqtSignal(QImage, QPixmap,int)
     ProcessSingle = QtCore.pyqtSignal(float)
     MessageSingle = QtCore.pyqtSignal(str)
+    progressBarSingle = QtCore.pyqtSignal(int)
+    progressvisualBarSingle = QtCore.pyqtSignal(bool)
 
     def __init__(self, direction:int,channel:int, pixelnwide: int, ordernum: int):
         self.direction = direction
@@ -280,6 +282,7 @@ class rasterimagethread(QThread):
         super(rasterimagethread, self).__init__()
 
     def run(self):
+        self.progressvisualBarSingle.emit(True)
         wmax = 1920
         hmax = 1080
         # imagedata = np.zeros([wmax, hmax])
@@ -319,6 +322,8 @@ class rasterimagethread(QThread):
             lineper = []
             for order in range(self.ordernum):
                 self.MessageSingle.emit("正在计算单周期内第" + str(order + 1) + "阶像素点")
+                self.progressvisualBarSingle.emit(True)
+                self.progressBarSingle.emit(int((order + 1) / self.ordernum*100))
                 color = order * perordercolorspan
 
                 # lineper = np.array([])
@@ -346,14 +351,16 @@ class rasterimagethread(QThread):
         bytesPerLine = bytesPerComponent * width  # 表示彩色图像每个像素占用3个（ndarray图像数组的第三维长度）字节的空间
         self.newtempQImg = QImage(imagedata, width, height, bytesPerLine, QImage.Format_RGB888)
         self.newtemppixmap = QPixmap(self.newtempQImg)
-
         self.EnddingSingle.emit(self.newtempQImg, self.newtemppixmap,self.direction)
+        self.progressvisualBarSingle.emit(False)
 
 
 class vorteximagethread(QThread):
     EnddingSingle = QtCore.pyqtSignal(QImage, QPixmap,int)
     ProcessSingle = QtCore.pyqtSignal(float)
     MessageSingle = QtCore.pyqtSignal(str)
+    progressBarSingle = QtCore.pyqtSignal(int)
+    progressvisualBarSingle = QtCore.pyqtSignal(bool)
 
     def __init__(self, direction:int,displaymode:int, par1: int, par2: int,par3:float):
         self.direction = direction
@@ -367,6 +374,7 @@ class vorteximagethread(QThread):
         super(vorteximagethread, self).__init__()
 
     def run(self):
+        self.progressvisualBarSingle.emit(True)
         w=1920
         h=1080
         if self.direction == 0:
@@ -376,7 +384,7 @@ class vorteximagethread(QThread):
                 j=0
                 for y in range(int(-h/2),int(h/2)):
                     arctanyx=math.atan2(y,x)
-                    color=self.par1*arctanyx+(2*math.pi/self.par2)*x*math.sin(self.par3)
+                    color=self.par1*arctanyx+(2*math.pi/self.par2)*(x)*math.sin(self.par3)
                     color=color%(2*math.pi)
                     if self.displaymode == 0:
                         color = int(round(color / (2 * math.pi) * 255))
@@ -386,6 +394,8 @@ class vorteximagethread(QThread):
                     j +=1
                 i +=1
                 self.MessageSingle.emit("已完成"+str(i)+"/"+str(w)+"列")
+                self.progressvisualBarSingle.emit(True)
+                self.progressBarSingle.emit(int(i / w*100))
         else:
             imagedata = np.zeros((w + 1, h + 1, 1), dtype=int)
             i = 0
@@ -403,6 +413,8 @@ class vorteximagethread(QThread):
                     j += 1
                 i += 1
                 self.MessageSingle.emit("已完成" + str(i) + "/" + str(w) + "列")
+                self.progressvisualBarSingle.emit(True)
+                self.progressBarSingle.emit(int(i / w*100))
 
 
 
@@ -414,14 +426,16 @@ class vorteximagethread(QThread):
         bytesPerLine = bytesPerComponent * width  # 表示彩色图像每个像素占用3个（ndarray图像数组的第三维长度）字节的空间
         self.newtempQImg = QImage(imagedata, width, height, bytesPerLine, QImage.Format_RGB888)
         self.newtemppixmap = QPixmap(self.newtempQImg)
-
         self.EnddingSingle.emit(self.newtempQImg, self.newtemppixmap,self.direction)
+        self.progressvisualBarSingle.emit(False)
 
 
 class diffimagethread(QThread):
     EnddingSingle = QtCore.pyqtSignal(QImage, QPixmap,int)
     ProcessSingle = QtCore.pyqtSignal(float)
     MessageSingle = QtCore.pyqtSignal(str)
+    progressBarSingle = QtCore.pyqtSignal(int)
+    progressvisualBarSingle = QtCore.pyqtSignal(bool)
 
     def __init__(self, direction:int,displaymode:int, par1: int, par2: int):
         self.direction = direction
@@ -431,6 +445,7 @@ class diffimagethread(QThread):
         super(diffimagethread, self).__init__()
 
     def run(self):
+        self.progressvisualBarSingle.emit(True)
         w=1920
         h=1080
         if self.direction == 0:
@@ -449,6 +464,8 @@ class diffimagethread(QThread):
                     j +=1
                 i +=1
                 self.MessageSingle.emit("已完成"+str(i)+"/"+str(w)+"列")
+                self.progressvisualBarSingle.emit(True)
+                self.progressBarSingle.emit(int(i/w*100))
         else:
             imagedata = np.zeros((w + 1, h + 1, 1), dtype=int)
             i = 0
@@ -465,6 +482,9 @@ class diffimagethread(QThread):
                     j += 1
                 i += 1
                 self.MessageSingle.emit("已完成" + str(i) + "/" + str(w) + "列")
+                self.progressvisualBarSingle.emit(True)
+                self.progressBarSingle.emit(int(i / w*100))
+
 
 
 
@@ -476,5 +496,5 @@ class diffimagethread(QThread):
         bytesPerLine = bytesPerComponent * width  # 表示彩色图像每个像素占用3个（ndarray图像数组的第三维长度）字节的空间
         self.newtempQImg = QImage(imagedata, width, height, bytesPerLine, QImage.Format_RGB888)
         self.newtemppixmap = QPixmap(self.newtempQImg)
-
         self.EnddingSingle.emit(self.newtempQImg, self.newtemppixmap,self.direction)
+        self.progressvisualBarSingle.emit(False)

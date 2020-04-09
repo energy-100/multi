@@ -29,12 +29,13 @@ class rasterwidget(QWidget):
     massageoutSignal = QtCore.pyqtSignal(str)
     settingchangeSignal = QtCore.pyqtSignal()
 
-    def __init__(self, data:imageObject,settingdict:dict,statusBar,pixmap):
+    def __init__(self, data:imageObject,settingdict:dict,statusBar,pixmap,progressBar):
         super(rasterwidget, self).__init__()
         self.data=data
         self.settingdict=settingdict
         self.statusBar=statusBar
         self.pixmap=pixmap
+        self.progressBar=progressBar
 
         self.layout = QGridLayout()
         self.layout.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
@@ -81,13 +82,16 @@ class rasterwidget(QWidget):
         self.layout.addWidget(self.directionbox, 2, 6, 1, 1)
 
         self.makeimagebutton = QPushButton("生成图片")
+        self.makeimagebutton.setIcon(QIcon("生成.png"))
         self.makeimagebutton.clicked.connect(self.makeimagebuttonclicked)
         self.layout.addWidget(self.makeimagebutton, 3, 0, 1, 1)
-        self.addmultordertolistbutton = QPushButton("添加到列表")
-        self.addmultordertolistbutton.clicked.connect(self.addmultordertolistbuttonclicked)
-        self.layout.addWidget(self.addmultordertolistbutton, 3, 1, 1, 1)
+        self.addtolistbutton = QPushButton("添加到列表")
+        self.addtolistbutton.setIcon(QIcon("加.png"))
+        self.addtolistbutton.clicked.connect(self.addtolistbuttonclicked)
+        self.layout.addWidget(self.addtolistbutton, 3, 1, 1, 1)
         self.addtostorebutton = QPushButton("保存到图片库")
-        self.addtostorebutton.clicked.connect(self.addtostoretabbuttonclicked)
+        self.addtostorebutton.setIcon(QIcon("保存.png"))
+        self.addtostorebutton.clicked.connect(self.addtostorebuttonclicked)
         self.layout.addWidget(self.addtostorebutton, 3, 2, 1, 1)
         self.setLayout(self.layout)
 
@@ -109,6 +113,8 @@ class rasterwidget(QWidget):
         self.massageoutSignal.emit("正在生成图片...")
         self.rasterimagethread.MessageSingle.connect(self.statusBar.showMessage)
         self.rasterimagethread.EnddingSingle.connect(self.rasterimagethreadend)
+        self.rasterimagethread.progressBarSingle.connect(self.progressBar.setValue)
+        self.rasterimagethread.progressvisualBarSingle.connect(self.progressBar.setVisible)
         self.rasterimagethread.start()
         
         
@@ -126,7 +132,7 @@ class rasterwidget(QWidget):
         self.massageoutSignal.emit("图片生成成功！")
 
     # todo:多级光栅图片添加到图片库
-    def addtostoretabbuttonclicked(self):
+    def addtostorebuttonclicked(self):
         if (self.newtemppixmap2 == []):
             self.massageoutSignal.emit("请先生成图片")
             return
@@ -156,7 +162,7 @@ class rasterwidget(QWidget):
 
 
     # todo：图片添加到列表
-    def addmultordertolistbuttonclicked(self):
+    def addtolistbuttonclicked(self):
         if (self.newtemppixmap2 == []):
             self.massageoutSignal.emit("请先生成图片")
             return

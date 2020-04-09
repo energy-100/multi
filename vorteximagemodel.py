@@ -28,12 +28,15 @@ class vortexwidget(QWidget):
     massageoutSignal = QtCore.pyqtSignal(str)
     settingchangeSignal = QtCore.pyqtSignal()
 
-    def __init__(self, data: imageObject, settingdict: dict,statusBar ,pixmap ):
+    def __init__(self, data: imageObject, settingdict: dict,statusBar ,pixmap ,progressBar):
         super(vortexwidget, self).__init__()
         self.data = data
         self.settingdict = settingdict
         self.statusBar = statusBar
         self.pixmap = []
+        self.progressBar = progressBar
+
+
         self.layout = QGridLayout()
         self.layout.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
         self.lbnewiamge = QLabel()
@@ -94,15 +97,30 @@ class vortexwidget(QWidget):
         self.directionbox.currentIndexChanged.connect(self.settingchange)
         self.layout.addWidget(self.directionbox, 2, 6, 1, 1)
 
-        self.makepar1imagebutton = QPushButton("生成图片")
-        self.makepar1imagebutton.clicked.connect(self.makepar1imagebuttonclicked)
-        self.layout.addWidget(self.makepar1imagebutton, 4, 0, 1, 1)
-        self.addpar1tolistbutton = QPushButton("添加到列表")
-        self.addpar1tolistbutton.clicked.connect(self.addtolistbuttonclicked)
-        self.layout.addWidget(self.addpar1tolistbutton, 4, 1, 1, 1)
-        self.addtostoretab4button = QPushButton("保存到图片库")
-        self.addtostoretab4button.clicked.connect(self.addtostorebuttonclicked)
-        self.layout.addWidget(self.addtostoretab4button, 4, 2, 1, 1)
+        # self.makeimagebutton = QPushButton("生成图片")
+        # self.makeimagebutton.setIcon(QIcon("生成.png"))
+        # self.makeimagebutton.clicked.connect(self.makepar1imagebuttonclicked)
+        # self.layout.addWidget(self.makepar1imagebutton, 4, 0, 1, 1)
+        # self.addtolistbutton = QPushButton("添加到列表")
+        # self.addpar1tolistbutton.clicked.connect(self.addtolistbuttonclicked)
+        # self.layout.addWidget(self.addpar1tolistbutton, 4, 1, 1, 1)
+        # self.addtostoretab4button = QPushButton("保存到图片库")
+        # self.addtostoretab4button.clicked.connect(self.addtostorebuttonclicked)
+        # self.layout.addWidget(self.addtostoretab4button, 4, 2, 1, 1)
+        # self.setLayout(self.layout)
+
+        self.makeimagebutton = QPushButton("生成图片")
+        self.makeimagebutton.setIcon(QIcon("生成.png"))
+        self.makeimagebutton.clicked.connect(self.makeimagebuttonclicked)
+        self.layout.addWidget(self.makeimagebutton, 4, 0, 1, 1)
+        self.addtordertolistbutton = QPushButton("添加到列表")
+        self.addtordertolistbutton.setIcon(QIcon("加.png"))
+        self.addtordertolistbutton.clicked.connect(self.addtolistbuttonclicked)
+        self.layout.addWidget(self.addtordertolistbutton, 4, 1, 1, 1)
+        self.addtostorebutton = QPushButton("保存到图片库")
+        self.addtostorebutton.setIcon(QIcon("保存.png"))
+        self.addtostorebutton.clicked.connect(self.addtostorebuttonclicked)
+        self.layout.addWidget(self.addtostorebutton, 4, 2, 1, 1)
         self.setLayout(self.layout)
 
 
@@ -120,7 +138,7 @@ class vortexwidget(QWidget):
         self.par3label.setText("参数3:" + str(round(value*0.001,3))+"π")
 
     # todo:多阶光栅生成按钮点击事件 **********************
-    def makepar1imagebuttonclicked(self):
+    def makeimagebuttonclicked(self):
         self.vorteximagethread = vorteximagethread(self.directionbox.currentIndex(),
                                                    self.displaymodebox.currentIndex(), self.par1Slider.value(),
                                                    self.par2Slider.value(),
@@ -128,6 +146,8 @@ class vortexwidget(QWidget):
         self.massageoutSignal.emit("正在生成图片...")
         self.vorteximagethread.MessageSingle.connect(self.statusBar.showMessage)
         self.vorteximagethread.EnddingSingle.connect(self.rasterimagethreadend)
+        self.vorteximagethread.progressBarSingle.connect(self.progressBar.setValue)
+        self.vorteximagethread.progressvisualBarSingle.connect(self.progressBar.setVisible)
         self.vorteximagethread.start()
 
     # todo:（tab4）加载新生成图片

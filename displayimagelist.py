@@ -20,6 +20,7 @@ from PyQt5.QtCore import *
 from Thread import *
 from MyDemo import Label, editimageLabel, Lineedit, TableWidget
 from ContinueImageThread import showcontinuethread
+import threading
 import time
 from PyQt5.QtWebEngineWidgets import *
 
@@ -184,8 +185,46 @@ class displayimagelistwidget(QWidget):
         self.massageoutSignal.emit("已停止！")
 
 
+    def startbuttonclicked2(self):
+        # if self.showing:
+        self.stopbutton.click()
+        # self.showing=True
+        self.showimageindex=0
+        self.filelist=self.showlist
+        self.interval=self.timeSlider.value()
+        timer=threading.Timer(self.interval*0.001, self.updateimage)
+        timer.start()
 
+    def updateimage(self):
 
+        t1 = time.time()
+        print()
+        file = self.filelist[self.showimageindex]
+        imageresize = file["pix"].scaled(file["width"] / 1920 * self.lb.width(),
+                                         file["height"] / 1080 * self.lb.height(), Qt.KeepAspectRatio,
+                                         Qt.SmoothTransformation)
+        # 更新预览图
+        self.lb.setPixmap(imageresize)
+        self.lb.setCursor(Qt.CrossCursor)
+        # 更新辅屏
+        self.lb3.setPixmap(file["pix"])
+        self.lb3.setCursor(Qt.BlankCursor)
+        # 更新imagelist
+        self.imagelist.selectColumn(self.showimageindex)
+        self.namelist.selectRow(self.showimageindex)
+        # self.MessageSingle.emit(
+        #     "正在显示第" + str(self.showimageindex + 1) + "/" + str(len(self.filelist)) + "张图像（时间间隔：" + str(
+        #         self.interval) + "ms)-" + self.filelist[self.showimageindex]["filename"])
+        # self.lblabel.setText("正在显示第" + str(self.showimageindex + 1) + "/" + str(len(self.filelist)) + "张图像（时间间隔：" + str(
+        #     self.interval) + "ms)-" + self.filelist[self.showimageindex]["filename"])
+        self.showimageindex += 1
+        if self.showimageindex == len(self.filelist):
+            self.showimageindex = 0
+        # self.EnddingSingle.emit()
+        t2 = time.time()
+        print("update",t2 - t1)
+        timer=threading.Timer(self.interval*0.001, self.updateimage)
+        timer.start()
 
 
     # def stopbuttonclicked(self):

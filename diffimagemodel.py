@@ -28,12 +28,15 @@ class diffwidget(QWidget):
     massageoutSignal = QtCore.pyqtSignal(str)
     settingchangeSignal = QtCore.pyqtSignal()
 
-    def __init__(self, data: imageObject, settingdict: dict, statusBar,pixmap):
+    def __init__(self, data: imageObject, settingdict: dict, statusBar,pixmap,progressBar):
         super(diffwidget, self).__init__()
         self.data = data
         self.settingdict = settingdict
         self.statusBar = statusBar
         self.pixmap = []
+        self.progressBar = progressBar
+
+
         self.layout = QGridLayout()
         self.layout.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
         self.lbnewiamge = QLabel()
@@ -81,15 +84,29 @@ class diffwidget(QWidget):
         self.directionbox.currentIndexChanged.connect(self.settingchange)
         self.layout.addWidget(self.directionbox, 2, 6, 1, 1)
 
-        self.makepar1imagebutton = QPushButton("生成图片")
-        self.makepar1imagebutton.clicked.connect(self.makepar1imagebuttonclicked)
-        self.layout.addWidget(self.makepar1imagebutton, 3, 0, 1, 1)
-        self.addpar1tolistbutton = QPushButton("添加到列表")
-        self.addpar1tolistbutton.clicked.connect(self.addtolistbuttonclicked)
-        self.layout.addWidget(self.addpar1tolistbutton, 3, 1, 1, 1)
-        self.addtostoretab4button = QPushButton("保存到图片库")
-        self.addtostoretab4button.clicked.connect(self.addtostorebuttonclicked)
-        self.layout.addWidget(self.addtostoretab4button, 3, 2, 1, 1)
+        # self.makepar1imagebutton = QPushButton("生成图片")
+        # self.makepar1imagebutton.clicked.connect(self.makepar1imagebuttonclicked)
+        # self.layout.addWidget(self.makepar1imagebutton, 3, 0, 1, 1)
+        # self.addpar1tolistbutton = QPushButton("添加到列表")
+        # self.addpar1tolistbutton.clicked.connect(self.addtolistbuttonclicked)
+        # self.layout.addWidget(self.addpar1tolistbutton, 3, 1, 1, 1)
+        # self.addtostoretab4button = QPushButton("保存到图片库")
+        # self.addtostoretab4button.clicked.connect(self.addtostorebuttonclicked)
+        # self.layout.addWidget(self.addtostoretab4button, 3, 2, 1, 1)
+        # self.setLayout(self.layout)
+
+        self.makeimagebutton = QPushButton("生成图片")
+        self.makeimagebutton.setIcon(QIcon("生成.png"))
+        self.makeimagebutton.clicked.connect(self.makeimagebuttonclicked)
+        self.layout.addWidget(self.makeimagebutton, 3, 0, 1, 1)
+        self.addtolistbutton = QPushButton("添加到列表")
+        self.addtolistbutton.setIcon(QIcon("加.png"))
+        self.addtolistbutton.clicked.connect(self.addtolistbuttonclicked)
+        self.layout.addWidget(self.addtolistbutton, 3, 1, 1, 1)
+        self.addtostorebutton = QPushButton("保存到图片库")
+        self.addtostorebutton.setIcon(QIcon("保存.png"))
+        self.addtostorebutton.clicked.connect(self.addtostorebuttonclicked)
+        self.layout.addWidget(self.addtostorebutton, 3, 2, 1, 1)
         self.setLayout(self.layout)
 
 
@@ -103,7 +120,7 @@ class diffwidget(QWidget):
 
 
     # todo:多阶光栅生成按钮点击事件 **********************
-    def makepar1imagebuttonclicked(self):
+    def makeimagebuttonclicked(self):
         self.diffimagethread = diffimagethread(self.directionbox.currentIndex(),
                                                    self.displaymodebox.currentIndex(), self.par1Slider.value(),
                                                    self.par2Slider.value())
@@ -111,6 +128,8 @@ class diffwidget(QWidget):
         # self.diffimagethread.MessageSingle.connect(self.massageoutSignal.emit)
         self.diffimagethread.MessageSingle.connect(self.statusBar.showMessage)
         self.diffimagethread.EnddingSingle.connect(self.rasterimagethreadend)
+        self.diffimagethread.progressBarSingle.connect(self.progressBar.setValue)
+        self.diffimagethread.progressvisualBarSingle.connect(self.progressBar.setVisible)
         self.diffimagethread.start()
 
     # todo:（tab4）加载新生成图片
