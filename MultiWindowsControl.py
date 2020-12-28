@@ -24,6 +24,7 @@ from PyQt5.QtWebEngineWidgets import *
 from rasterimagemodel import rasterwidget
 from vorteximagemodel import vortexwidget
 from diffimagemodel import diffwidget
+from rawvorteximagemodel import rawvortexwidget
 from displayimagelist import displayimagelistwidget
 
 
@@ -76,8 +77,8 @@ class main(QMainWindow):
         self.list0.setDragEnabled(True)
         self.list0.setAcceptDrops(True)
         self.list0.FilepathSignal.connect(self.filepathdrop)
-        self.list0.setRowCount(1)
-        self.list0.setColumnCount(1)
+        self.list0.setRowCount(0)
+        self.list0.setColumnCount(0)
         self.list0.setSelectionBehavior(QAbstractItemView.SelectColumns)
         self.list0.clicked.connect(self.list0Rowindexchanged)
         # self.list0.setWindowFlags(Qt.FramelessWindowHint)
@@ -226,16 +227,22 @@ class main(QMainWindow):
         self.tab6widget.settingchangeSignal.connect(self.savehistory)
         self.tab6widget.massageoutSignal.connect(self.statusBar().showMessage)
 
+        self.tab8widget = rawvortexwidget(self.data, self.settingdict, self.statusBar(), self.newtemppixmap2,self.progressBar)
+        self.tab8widget.addtolistenddingSignal.connect(self.readending)
+        self.tab8widget.settingchangeSignal.connect(self.savehistory)
+        self.tab8widget.massageoutSignal.connect(self.statusBar().showMessage)
+
         self.tab7widget = displayimagelistwidget(self.data, self.settingdict, self.statusBar(), self.newtemppixmap2,self.list0,self.lb,self.lb3,self.lblabel)
         self.tab7widget.setContentsMargins(0, 0, 0, 0)
-        # self.tab7widget.addtolistenddingSignal.connect(self.readending)
+        self.tab7widget.addtolistenddingSignal.connect(self.readending)
         self.tab7widget.massageoutSignal.connect(self.statusBar().showMessage)
         self.tab7widget.settingchangeSignal.connect(self.savehistory)
 
         self.tab4 = self.imagetab.addTab(self.tab4widget ,"多阶光栅图片生成")
         self.tab5 = self.imagetab.addTab(self.tab5widget ,"涡旋光束图片生成")
         self.tab6 = self.imagetab.addTab(self.tab6widget ,"衍射光束图片生成")
-        # self.tab7 = self.imagetab.addTab(self.tab7widget ,"连续图像输出")
+        self.tab8 = self.imagetab.addTab(self.tab8widget, "未调制涡旋图像生成")
+        self.tab7 = self.imagetab.addTab(self.tab7widget ,"连续图像输出")
         self.tabinf = self.imagetab.addTab(self.browser, "说明文档")
         # self.tabinf = self.imagetab.addTab(self.tabinfwidget, "说明文档")
         # self.tab1=self.imagetab.addTab(self.lb, "辅屏画面预览")
@@ -362,7 +369,7 @@ class main(QMainWindow):
             self.statusBar().showMessage("正在读取，请稍后重试！")
         else:
             self.reading == True
-            path = QFileDialog.getOpenFileName(self, '请选择图片文件', '', 'Image Files (*.jpg *.png *.jpeg)')
+            path,_ = QFileDialog.getOpenFileName(self, '请选择图片文件', '', 'Image Files (*.jpg *.png *.jpeg)')
             self.runreadfileThread(path)
 
     # todo:打开图片库
@@ -550,6 +557,12 @@ class main(QMainWindow):
         setting["t6p2"]=self.tab6widget.par2Slider.value()
         setting["t6p3"]=self.tab6widget.displaymodebox.currentIndex()
         setting["t6p4"]=self.tab6widget.directionbox.currentIndex()
+        setting["t8p1"]=self.tab8widget.par1Slider.value()
+        setting["t8p2"]=self.tab8widget.par2Slider.value()
+        setting["t8p3"]=self.tab8widget.displaymodebox.currentIndex()
+        setting["t8p4"]=self.tab8widget.eagegrayvalue.currentIndex()
+        setting["t8p5"]=self.tab8widget.fullshow.currentIndex()
+
         setting["t7p1"]=self.tab7widget.timeSlider.value()
         setting["t7listindex"]=self.tab7widget.imagelist.currentIndex().column()
         setting["t7tempimagelist"]=self.tab7widget.showlist
@@ -610,6 +623,12 @@ class main(QMainWindow):
         self.tab6widget.par2Slider.setValue(setting["t6p2"])
         self.tab6widget.displaymodebox.setCurrentIndex(setting["t6p3"])
         self.tab6widget.directionbox.setCurrentIndex(setting["t6p4"])
+        self.tab8widget.par1Slider.setValue(setting["t8p1"])
+        self.tab8widget.par2Slider.setValue(setting["t8p2"])
+        self.tab8widget.displaymodebox.setCurrentIndex(setting["t8p3"])
+        self.tab8widget.eagegrayvalue.setCurrentIndex(setting["t8p4"])
+        self.tab8widget.fullshow.setCurrentIndex(setting["t8p5"])
+
         self.tab7widget.timeSlider.setValue(setting["t7p1"])
 
         self.tab7widget.showlist=setting["t7tempimagelist"]

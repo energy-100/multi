@@ -13,6 +13,9 @@ import threading
 import time
 import numpy as np
 
+import matplotlib.pyplot as plt
+import matplotlib; matplotlib.use('TkAgg')
+
 # todo: 系统屏幕数量监听线程
 class getwincountthread(QThread):
     wincountSingle = QtCore.pyqtSignal(int)
@@ -497,4 +500,62 @@ class diffimagethread(QThread):
         self.newtempQImg = QImage(imagedata, width, height, bytesPerLine, QImage.Format_RGB888)
         self.newtemppixmap = QPixmap(self.newtempQImg)
         self.EnddingSingle.emit(self.newtempQImg, self.newtemppixmap,self.direction)
+        self.progressvisualBarSingle.emit(False)
+
+class rawvorteximagethread(QThread):
+    EnddingSingle = QtCore.pyqtSignal(QImage, QPixmap,int,int,int,int)
+    ProcessSingle = QtCore.pyqtSignal(float)
+    MessageSingle = QtCore.pyqtSignal(str)
+    progressBarSingle = QtCore.pyqtSignal(int)
+    progressvisualBarSingle = QtCore.pyqtSignal(bool)
+
+    def __init__(self, eagegrayvalue:int,displaymode:int, fullshow:int,par1: int, par2: int):
+        self.eagegrayvalue = eagegrayvalue
+        self.displaymode = displaymode
+        self.fullshow=fullshow
+        self.par1 = par1
+        self.par2 = par2
+        super(rawvorteximagethread, self).__init__()
+
+    def run(self):
+        self.progressvisualBarSingle.emit(True)
+        w=1920
+        h=1080
+        imagedata=np.zeros((w+1,h+1,1),dtype=int)
+        angleRange=math.pi*2/self.par1
+        for x in range(w):
+            for y in range(h):
+                imagedata[x][y][0] = 10
+                if self.fullshow == 0:
+                    length=0
+                else:
+                    length = math.sqrt(((x - w / 2 - 1) ** 2) + ((y - h / 2 - 1) ** 2))
+                if length < h / 2:
+                    angle1 = math.atan2((x - w / 2 - 1), (y - h / 2 - 1)) % angleRange
+                    # angle1 = (int(angle1 * 180 / math.pi) + 180) % 90
+
+                    if self.displaymode == 0:
+                        color = int(angle1 / angleRange * 255 + 0.5)
+                    else:
+                        color = 255 - int(angle1 / angleRange * 255 + 0.5)
+                    imagedata[x][y][0] = color
+                else:
+                    if self.eagegrayvalue==0:
+                        imagedata[x][y][0] = 0
+                    else:
+                        imagedata[x][y][0] = 255
+            self.MessageSingle.emit("已完成" + str(x) + "/" + str(w) + "列")
+            self.progressvisualBarSingle.emit(True)
+            self.progressBarSingle.emit(int(x/w*100))
+
+        imagedata=np.swapaxes(imagedata,0,1)
+        imagedata = np.tile(imagedata, (1, 1, 4))
+        imagedata = imagedata[0:h, 0:w, 0:3].copy()
+        imagedata = imagedata.astype(np.uint8)
+        height, width, bytesPerComponent = imagedata.shape
+        bytesPerLine = bytesPerComponent * width  # 表示彩色图像每个像素占用3个（ndarray图像数组的第三维长度）字节的空间
+        self.newtempQImg = QImage(imagedata, width, height, bytesPerLine, QImage.Format_RGB888)
+        self.newtemppixmap = QPixmap(self.newtempQImg)
+        # flag=self.newtemppixmap.save("D:/PyCharm_GitHub_local_Repository/multi/aaa.png")
+        self.EnddingSingle.emit(self.newtempQImg, self.newtemppixmap,self.eagegrayvalue,self.par1,self.displaymode,self.fullshow)
         self.progressvisualBarSingle.emit(False)
