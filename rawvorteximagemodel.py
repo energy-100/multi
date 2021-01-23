@@ -47,7 +47,7 @@ class rawvortexwidget(QWidget):
         self.layout.addWidget(self.par1label, 1, 0, 1, 1)
         self.par1Slider = QSlider(Qt.Horizontal)
         self.layout.addWidget(self.par1Slider, 1, 1, 1, 5)
-        self.par1Slider.setMinimum(1)  # 最小值
+        self.par1Slider.setMinimum(0)  # 最小值
         self.par1Slider.setMaximum(128)  # 最大值
         self.par1Slider.setSingleStep(1)  # 步长
         self.par1Slider.setTickPosition(QSlider.TicksBelow)
@@ -73,7 +73,7 @@ class rawvortexwidget(QWidget):
 
 
         self.displaymodebox = QComboBox()
-        self.displaymodebox.addItems(["正显", "反显"])
+        self.displaymodebox.addItems(["反显", "正显"])
         self.displaymodebox.setCurrentIndex(0)
         self.displaymodebox.currentIndexChanged.connect(self.settingchange)
         self.layout.addWidget(self.displaymodebox, 1, 6, 1, 1)
@@ -133,9 +133,9 @@ class rawvortexwidget(QWidget):
         self.tempQImg = qimage
         self.pixmap = pixmap
         if eagegrayvalue == 0:
-            self.eagegraystr = "MAX"
-        else:
             self.eagegraystr = "MIN"
+        else:
+            self.eagegraystr = "MAX"
         if fullshow==0:
             self.fullshowstr="全屏"
         else:
@@ -185,9 +185,9 @@ class rawvortexwidget(QWidget):
         if (not os.path.exists(os.getcwd() + "/temp/")):
             os.makedirs(os.getcwd() + "/temp/")
         if self.displaymodebox.currentIndex()==0:
-            mode="正显"
-        else:
             mode="反显"
+        else:
+            mode="正显"
         filepath = os.getcwd() + "/temp/" + "未调制涡旋图_显示区域："+self.fullshowstr+"_显示模式："+mode+"_边缘灰度：" + self.eagegraystr + "_" + "参数L：" + str(self.L) + ".png"
         try:
             self.tempQImg.save(filepath)

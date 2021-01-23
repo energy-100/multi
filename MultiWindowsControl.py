@@ -31,6 +31,11 @@ from displayimagelist import displayimagelistwidget
 
 # 主对话框
 class main(QMainWindow):
+
+    def closeEvent(self, event):
+        # sys.exit(app.exec_())
+        self.updatawincountthread.terminate()
+
     # 图片改变信号
     imagechangedSignal = QtCore.pyqtSignal(object)
 

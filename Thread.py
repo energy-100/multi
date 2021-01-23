@@ -522,31 +522,45 @@ class rawvorteximagethread(QThread):
         w=1920
         h=1080
         imagedata=np.zeros((w+1,h+1,1),dtype=int)
-        angleRange=math.pi*2/self.par1
-        for x in range(w):
-            for y in range(h):
-                imagedata[x][y][0] = 10
-                if self.fullshow == 0:
-                    length=0
-                else:
-                    length = math.sqrt(((x - w / 2 - 1) ** 2) + ((y - h / 2 - 1) ** 2))
-                if length < h / 2:
-                    angle1 = math.atan2((x - w / 2 - 1), (y - h / 2 - 1)) % angleRange
-                    # angle1 = (int(angle1 * 180 / math.pi) + 180) % 90
 
-                    if self.displaymode == 0:
-                        color = int(angle1 / angleRange * 255 + 0.5)
+        if self.par1==0:
+            if self.displaymode == 0:
+                imagedata=np.full([w+1,h+1,1], 0)
+            else:
+                imagedata = np.full([w+1,h+1,1], 255)
+            # for x in range(w):
+            #     for y in range(h):
+            #         if self.displaymode == 0:
+            #             imagedata[x][y][0]=255
+            #         else:
+            #             imagedata[x][y][0]=0
+            #     self.MessageSingle.emit("已完成" + str(x) + "/" + str(w) + "列")
+            #     self.progressBarSingle.emit(int(x / w * 100))
+        else:
+            angleRange=math.pi*2/self.par1
+            for x in range(w):
+                for y in range(h):
+                    imagedata[x][y][0] = 10
+                    if self.fullshow == 0:
+                        length=0
                     else:
-                        color = 255 - int(angle1 / angleRange * 255 + 0.5)
-                    imagedata[x][y][0] = color
-                else:
-                    if self.eagegrayvalue==0:
-                        imagedata[x][y][0] = 0
+                        length = math.sqrt(((x - w / 2 - 1) ** 2) + ((y - h / 2 - 1) ** 2))
+                    if length < h / 2:
+                        angle1 = math.atan2((x - w / 2 - 1), (y - h / 2 - 1)) % angleRange
+                        # angle1 = (int(angle1 * 180 / math.pi) + 180) % 90
+
+                        if self.displaymode == 0:
+                            color = int(angle1 / angleRange * 255 + 0.5)
+                        else:
+                            color = 255 - int(angle1 / angleRange * 255 + 0.5)
+                        imagedata[x][y][0] = color
                     else:
-                        imagedata[x][y][0] = 255
-            self.MessageSingle.emit("已完成" + str(x) + "/" + str(w) + "列")
-            self.progressvisualBarSingle.emit(True)
-            self.progressBarSingle.emit(int(x/w*100))
+                        if self.eagegrayvalue==0:
+                            imagedata[x][y][0] = 0
+                        else:
+                            imagedata[x][y][0] = 255
+                self.MessageSingle.emit("已完成" + str(x) + "/" + str(w) + "列")
+                self.progressBarSingle.emit(int(x/w*100))
 
         imagedata=np.swapaxes(imagedata,0,1)
         imagedata = np.tile(imagedata, (1, 1, 4))
